@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#080f1d">
+<title>Tạo thiệp riêng tư · Trung Thu 2026</title>
+<meta name="description" content="Thiết kế thiệp Trung Thu gửi riêng cho người thương kèm mã QR và liên kết bí mật.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='12' fill='%23080f1d'/%3E%3Cpath d='M28 7A14 14 0 1 0 33 28 14 14 0 0 1 28 7' fill='%23f2c572'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600&family=Charm:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css?v=20260921l">
+</head>
+<body data-page="create-card">
+<div id="atmosphere" aria-hidden="true"></div>
+
+<header>
+  <a class="brand" href="index.html">
+    <span class="brand-moon">☾</span>
+    <span>Dưới Ánh Trăng<small>TRUNG THU · 2026</small></span>
+  </a>
+  <nav aria-label="Điều hướng">
+    <a href="index.html">Trang chủ</a>
+    <a href="wishes.html">Lời chúc</a>
+    <a href="sky.html">Bầu trời</a>
+    <a href="create-reunion.html">Bánh đoàn viên</a>
+    <a href="create-feast.html">Góp cỗ</a>
+    <a href="profile.html">Trang của bạn</a>
+    <a href="about.html">Về đêm trăng</a>
+  </nav>
+  <button class="icon-button music-playing" id="music" aria-label="Tắt nhạc" title="Tắt nhạc"><svg viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path class="music-wave-1" d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path class="music-wave-2" d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg></button>
+</header>
+
+<div class="page-utility">
+  <a href="index.html"><svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Trang chủ</a>
+  <a href="profile.html">Trang của bạn <svg viewBox="0 0 24 24"><path d="M7 17L17 7M7 7h10v10"/></svg></a>
+</div>
+
+<main>
+  <div class="section" style="max-width:1120px;margin:0 auto;padding-top:clamp(20px, 4vh, 40px);">
+    <div class="section-title">
+      <span class="eyebrow">TRAO GỬI TÂM TÌNH · BÍ MẬT & ĐỘC BẢN</span>
+      <h2 class="hand">Tạo thiệp gửi người thương</h2>
+      <p>Thiết kế bức thư trăng rằm dành riêng cho một người đặc biệt, tự động tạo mã QR độc bản và liên kết riêng tư để gửi tặng.</p>
+    </div>
+
+    <div class="card-creation-grid">
+      <!-- Left: Creation Form -->
+      <div class="card-form-box">
+        <form id="create-card-form">
+          <div class="form-group">
+            <label for="card-to">
+              <span>Gửi đến ai? <b style="color:var(--gold)">*</b></span>
+              <small style="color:#b59e86">Người nhận thiệp</small>
+            </label>
+            <input id="card-to" maxlength="40" placeholder="Ví dụ: Bố Mẹ, Gia đình, Bạn thân, Người thương..." required>
+          </div>
+
+          <div class="form-group">
+            <label for="card-from">
+              <span>Người gửi <b style="color:var(--gold)">*</b></span>
+              <small style="color:#b59e86">Tên bạn ký tên</small>
+            </label>
+            <input id="card-from" maxlength="40" placeholder="Tên bạn ký tên cuối thiệp..." required>
+          </div>
+
+          <!-- Theme Selector -->
+          <div class="form-group">
+            <label>
+              <span>Phong cách chất liệu thiệp</span>
+              <small style="color:#b59e86">4 sắc thái mùa trăng</small>
+            </label>
+            <div class="theme-select-row" id="card-theme-selector">
+              <label class="theme-select-card active" data-theme="gold">
+                <input type="radio" name="card-theme" value="gold" checked>
+                <span class="theme-swatch theme-swatch-gold"></span>
+                <b>Giấy Dó</b>
+                <small>Cổ điển</small>
+              </label>
+              <label class="theme-select-card" data-theme="midnight">
+                <input type="radio" name="card-theme" value="midnight">
+                <span class="theme-swatch theme-swatch-midnight"></span>
+                <b>Đêm Trăng</b>
+                <small>Huyền bí</small>
+              </label>
+              <label class="theme-select-card" data-theme="ruby">
+                <input type="radio" name="card-theme" value="ruby">
+                <span class="theme-swatch theme-swatch-ruby"></span>
+                <b>Gấm Đỏ</b>
+                <small>Đoàn viên</small>
+              </label>
+              <label class="theme-select-card" data-theme="emerald">
+                <input type="radio" name="card-theme" value="emerald">
+                <span class="theme-swatch theme-swatch-emerald"></span>
+                <b>Ngọc Bích</b>
+                <small>Thanh nhã</small>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>
+              <span>Chọn chiếc đèn lồng gửi gắm</span>
+              <small style="color:#b59e86">Đèn đi kèm thiệp</small>
+            </label>
+            <div class="lantern-select-row" id="card-lantern-selector">
+              <label class="lantern-select-card active" data-type="ong-sao">
+                <input type="radio" name="card-lantern" value="ong-sao" checked>
+                <img src="assets/lantern-ong-sao.webp" onerror="this.src='assets/lantern-ong-sao.png'" alt="Đèn ông sao">
+                <span>Ông sao</span>
+              </label>
+              <label class="lantern-select-card" data-type="ca-chep">
+                <input type="radio" name="card-lantern" value="ca-chep">
+                <img src="assets/lantern-ca-chep.webp" onerror="this.src='assets/lantern-ca-chep.png'" alt="Đèn cá chép">
+                <span>Cá chép</span>
+              </label>
+              <label class="lantern-select-card" data-type="keo-quan">
+                <input type="radio" name="card-lantern" value="keo-quan">
+                <img src="assets/lantern-keo-quan.webp" onerror="this.src='assets/lantern-keo-quan.png'" alt="Đèn kéo quân">
+                <span>Kéo quân</span>
+              </label>
+              <label class="lantern-select-card" data-type="tho-ngoc">
+                <input type="radio" name="card-lantern" value="tho-ngoc">
+                <img src="assets/lantern-tho-ngoc.webp" onerror="this.src='assets/lantern-tho-ngoc.png'" alt="Đèn thỏ ngọc">
+                <span>Thỏ ngọc</span>
+              </label>
+              <label class="lantern-select-card" data-type="hoi-an">
+                <input type="radio" name="card-lantern" value="hoi-an">
+                <img src="assets/lantern-hoi-an.webp" onerror="this.src='assets/lantern-hoi-an.png'" alt="Đèn Hội An">
+                <span>Hội An</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Stamp Selector -->
+          <div class="form-group">
+            <label>
+              <span>Dấu ấn chúc phúc</span>
+              <small style="color:#b59e86">Ấn mộc thư pháp</small>
+            </label>
+            <div class="stamp-select-row" id="card-stamp-selector">
+              <label class="stamp-chip active" data-stamp="Đoàn Viên">
+                <input type="radio" name="card-stamp" value="Đoàn Viên" checked>
+                <span>Đoàn Viên</span>
+              </label>
+              <label class="stamp-chip" data-stamp="Bình An">
+                <input type="radio" name="card-stamp" value="Bình An">
+                <span>Bình An</span>
+              </label>
+              <label class="stamp-chip" data-stamp="Như Ý">
+                <input type="radio" name="card-stamp" value="Như Ý">
+                <span>Như Ý</span>
+              </label>
+              <label class="stamp-chip" data-stamp="Hạnh Phúc">
+                <input type="radio" name="card-stamp" value="Hạnh Phúc">
+                <span>Hạnh Phúc</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="card-message">
+              <span>Lời nhắn gửi trong đêm trăng <b style="color:var(--gold)">*</b></span>
+              <small id="card-char-count" style="color:#b59e86">0/400</small>
+            </label>
+            <div class="quote-chips">
+              <button type="button" class="quote-chip" data-to="Gia đình thân yêu" data-quote="Mùa trăng rằm đoàn viên, chúc cả gia đình mình luôn dồi dào sức khỏe, ngập tràn tiếng cười và bình an dưới ánh trăng.">Gia đình</button>
+              <button type="button" class="quote-chip" data-to="Bố Mẹ yêu thương" data-quote="Con chúc bố mẹ mùa Trung Thu thật ấm áp, luôn mạnh khỏe và luôn an vui bên con cháu. Con yêu bố mẹ thật nhiều.">Bố Mẹ</button>
+              <button type="button" class="quote-chip" data-to="Bạn thân của tôi" data-quote="Chúc bạn mùa trăng ấm áp, mọi ước mơ ấp ủ đều sẽ sáng tỏ và thành hiện thực. Trung Thu vui vẻ nhé bạn tôi!">Bạn thân</button>
+              <button type="button" class="quote-chip" data-to="Thầy Cô kính yêu" data-quote="Kính chúc thầy cô một mùa Trung Thu an lành, luôn dồi dào nhiệt huyết và tràn đầy niềm vui trong sự nghiệp trồng người.">Thầy Cô</button>
+              <button type="button" class="quote-chip" data-to="Người thương" data-quote="Trung Thu này, mong người mình thương luôn an yên, nụ cười luôn rạng rỡ như trăng rằm. Cảm ơn vì đã luôn ở bên cạnh mình.">Người thương</button>
+            </div>
+            <textarea id="card-message" maxlength="400" placeholder="Viết những lời chân tình nhất bạn muốn gửi trao..." required></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="card-passcode">
+              <span>Mật khẩu mở thiệp (Tùy chọn)</span>
+              <small style="color:#b59e86">Để trống nếu mở trực tiếp</small>
+            </label>
+            <input id="card-passcode" maxlength="20" placeholder="Ví dụ: ngày kỷ niệm, ngày sinh nhật (nếu muốn bảo mật)">
+          </div>
+
+          <button type="submit" class="gold" id="btn-submit-card" style="width:100%;padding:14px 20px;font-size:15px;margin-top:10px;">
+            <svg class="btn-icon" style="stroke:#2c1b0d;" viewBox="0 0 24 24"><path d="M12 7.5c-1.8-2.2-4.5-2.2-4.5-.3 0 1.6 3 2.8 4.5 2.8s4.5-1.2 4.5-2.8c0-1.9-2.7-1.9-4.5.3z" fill="none"/><rect x="3" y="7.5" width="18" height="3.5" rx="1.5"/><path d="M5 11v8.5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V11"/><path d="M12 7.5V21.5"/></svg>
+            Tạo thiệp và Xuất mã QR
+          </button>
+        </form>
+      </div>
+
+      <!-- Right: Live Preview -->
+      <div class="card-preview-sticky">
+        <div class="preview-heading">
+          <svg class="btn-icon" style="width:14px;height:14px;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
+          Xem trước tấm thiệp thực tế
+        </div>
+
+        <div class="royal-letter" id="card-live-preview">
+          <img class="letter-lantern" id="preview-lantern" src="assets/lantern-ong-sao.webp" alt="Lồng đèn">
+          <div class="recipient-salutation" id="preview-to">Gửi tặng: Bố Mẹ và Gia đình</div>
+          <span class="letter-divider">✧ ───── ☾ ───── ✧</span>
+          <div class="letter-message" id="preview-msg">Mùa trăng rằm đoàn viên, con chúc cả gia đình mình luôn dồi dào sức khỏe, ngập tràn tiếng cười và bình an dưới ánh trăng.</div>
+          <div class="letter-sender" id="preview-from">— Con của bố mẹ</div>
+          <div class="letter-timestamp">Mùa trăng rằm tháng Tám · 2026</div>
+          <div class="letter-seal-stamp" id="preview-stamp">Đoàn Viên</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Result Modal with QR Code -->
+<dialog id="card-result-dialog" class="wish-dialog" style="max-width:540px;">
+  <button class="close" id="close-card-result" aria-label="Đóng">×</button>
+  <span class="eyebrow">TẤM THIỆP ĐÃ SẴN SÀNG TRAO GỬI</span>
+  <h2 class="hand" style="font-size:32px;margin:8px 0 16px;">Mã QR và Liên kết thiệp</h2>
+  <p style="font-size:14px;color:#dfd7d0;margin-bottom:12px;">Bạn có thể tải ảnh mã QR để gửi qua tin nhắn, in ra tặng kèm quà, hoặc sao chép liên kết bí mật bên dưới.</p>
+
+  <div class="qr-modal-inner">
+    <div class="qr-box-wrapper" id="generated-qrcode"></div>
+
+    <div class="copy-link-bar">
+      <input id="card-link-input" readonly>
+      <button type="button" class="gold" id="btn-copy-card-link" style="padding:10px 18px;font-size:13px;white-space:nowrap;">
+        <svg class="btn-icon" style="stroke:#2c1b0d;" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        Sao chép
+      </button>
+    </div>
+
+    <div class="card-action-row">
+      <button class="outline" id="btn-download-qr">
+        <svg class="btn-icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Tải mã QR (PNG)
+      </button>
+      <button class="outline" id="btn-download-card-image">
+        <svg class="btn-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        Lưu thiệp ảnh (PNG)
+      </button>
+      <a class="gold" id="btn-view-card-direct" href="#" target="_blank" style="padding:10px 18px;font-size:13px;">
+        <svg class="btn-icon" style="stroke:#2c1b0d;" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        Xem thử thiệp
+      </a>
+    </div>
+  </div>
+</dialog>
+
+<div id="toast" role="status" aria-live="polite"></div>
+<script src="qrcode.min.js"></script>
+<script src="app.js?v=20260921l"></script>
+</body>
+</html>

@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#080f1d">
+<title>Mâm Cỗ Trông Trăng · Trung Thu 2026</title>
+<meta name="description" content="Chung tay góp cỗ và cùng nhau phá cỗ đêm rằm dưới ánh trăng.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600&family=Charm:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css?v=20260921l">
+</head>
+<body data-page="feast">
+<div id="atmosphere" aria-hidden="true"></div>
+
+<header>
+  <a class="brand" href="index.html">
+    <span class="brand-moon">☾</span>
+    <span>Dưới Ánh Trăng<small>TRUNG THU · 2026</small></span>
+  </a>
+  <nav aria-label="Điều hướng">
+    <a href="index.html">Trang chủ</a>
+    <a href="wishes.html">Lời chúc</a>
+    <a href="sky.html">Bầu trời</a>
+    <a href="create-reunion.html">Bánh đoàn viên</a>
+    <a class="active" href="create-feast.html">Góp cỗ</a>
+    <a href="profile.html">Trang của bạn</a>
+    <a href="about.html">Về đêm trăng</a>
+  </nav>
+  <button class="icon-button music-playing" id="music" aria-label="Tắt nhạc" title="Tắt nhạc"><svg viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path class="music-wave-1" d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path class="music-wave-2" d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg></button>
+</header>
+
+<div class="page-utility">
+  <a href="index.html">← Trang chủ</a>
+  <a href="create-feast.html">Khởi tạo mâm cỗ mới ↗</a>
+</div>
+
+<main>
+  <section class="section feast-page">
+    <div id="feast-loading" class="reunion-loading">
+      <span class="moon-loader">☾</span>
+      <p>Đang dọn mâm cỗ dưới ánh trăng…</p>
+    </div>
+
+    <div id="feast-error" class="reunion-error" hidden>
+      <span>☾</span>
+      <h1 class="hand">Chưa tìm thấy mâm cỗ</h1>
+      <p>Liên kết có thể chưa chính xác hoặc mâm cỗ chưa được tạo.</p>
+      <a class="gold" href="create-feast.html">Khởi Tạo Mâm Cỗ Trông Trăng</a>
+    </div>
+
+    <div id="feast-content" hidden>
+      <div class="section-title feast-heading">
+        <span class="eyebrow" id="feast-status-badge">ĐẠI HỘI TRĂNG RẰM · ĐANG GÓP CỖ</span>
+        <h1 class="hand" id="feast-table-title">Mâm Cỗ Đoàn Viên</h1>
+        <p><b id="feast-owner-name"></b> mời bạn cùng chung tay vun đắp mâm cỗ đêm rằm.</p>
+      </div>
+
+      <!-- Action Banner -->
+      <div class="feast-action-bar">
+        <blockquote id="feast-invitation-text" class="feast-quote"></blockquote>
+        <div class="feast-cta-group">
+          <button class="gold" id="btn-open-contribute">
+            <svg class="btn-icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+            Góp một món vào mâm
+          </button>
+          <button class="outline" id="btn-start-celebrate" hidden>
+            <svg class="btn-icon" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            Mở Hội Phá Cỗ
+          </button>
+          <button class="gold festive-pulse" id="btn-pick-gift" hidden>
+            <svg class="btn-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
+            Hái Lộc Phá Cỗ (Bốc Quà May Mắn)
+          </button>
+          <button class="outline" id="btn-share-feast">
+            <svg class="btn-icon" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            Mời bạn bè cùng góp cỗ
+          </button>
+        </div>
+      </div>
+
+      <!-- Feast Visual Stage -->
+      <div class="feast-stage" id="feast-stage">
+        <div class="feast-moon-glow" aria-hidden="true"></div>
+
+        <!-- Progress Tracker -->
+        <div class="feast-progress-wrap">
+          <div class="feast-progress-info">
+            <span id="feast-progress-stats">Đã góp 0 món</span>
+            <span id="feast-progress-target">Mục tiêu: 25 món</span>
+          </div>
+          <div class="feast-progress-bar-bg">
+            <div class="feast-progress-bar-fill" id="feast-progress-bar"></div>
+          </div>
+          <p class="feast-progress-sub" id="feast-progress-sub">Mỗi người góp một món để cùng nhau mở hội phá cỗ!</p>
+        </div>
+
+        <!-- Realtime Countdown Widget -->
+        <div class="feast-countdown-card" id="feast-countdown-card" hidden>
+          <span class="countdown-eyebrow">✦ THỜI GIAN ĐẾM NGƯỢC ĐẾN GIỜ PHÁ CỖ ✦</span>
+          <div class="countdown-clock" id="feast-countdown-clock">--:--:--</div>
+          <small id="feast-countdown-note">Đến giờ hẹn, mâm cỗ sẽ tự động mở hội tưng bừng!</small>
+        </div>
+
+        <!-- Platter Container -->
+        <div class="feast-platter-area" id="feast-platter-area">
+          <div class="feast-platter" id="feast-platter">
+            <div class="feast-center-piece" id="feast-center-piece">
+              <span class="center-symbol">福</span>
+              <small id="feast-center-label">Đoàn Viên</small>
+            </div>
+            <!-- Items rendered dynamically -->
+            <div class="feast-items-grid" id="feast-items-container"></div>
+          </div>
+        </div>
+
+        <!-- Celebration Banner (When celebration active) -->
+        <div class="feast-celebration-banner" id="feast-celebration-banner" hidden>
+          <div class="banner-inner">
+            <span class="lion-dance-art">✦ ☾ ✦</span>
+            <h2 class="hand">Đã Đến Giờ Mở Hội Phá Cỗ!</h2>
+            <p>Tiếng trống tùng rinh rinh rộn rã! Hãy bấm <b>Hái Lộc Phá Cỗ</b> để nhận phần quà may mắn và mở bức thư bí mật của bạn mình.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contributor Wall (Bảng Vàng Đoàn Viên - Hỗ trợ lên đến 100+ người) -->
+      <section class="feast-wall-section">
+        <div class="section-title">
+          <span class="eyebrow">BẢNG VÀNG ĐOÀN VIÊN</span>
+          <h2 class="hand">Những Người Đã Chung Tay Góp Cỗ</h2>
+          <p>Bấm vào tên bất kỳ ai để xem món đồ của người đó tỏa sáng trên mâm cỗ.</p>
+        </div>
+
+        <div class="feast-wall-toolbar">
+          <input id="feast-search-input" placeholder="Tìm tên bạn bè trong mâm cỗ…" maxlength="30">
+          <span class="feast-wall-count" id="feast-wall-count">0 người đã góp</span>
+        </div>
+
+        <div class="feast-contributors-grid" id="feast-contributors-list">
+          <p class="empty-shelf">Chưa có ai góp cỗ. Hãy là người đầu tiên!</p>
+        </div>
+      </section>
+    </div>
+  </section>
+</main>
+
+<!-- Modal 1: Góp Một Món Vào Mâm -->
+<dialog id="contribute-dialog" class="wish-dialog feast-dialog">
+  <button class="close" id="close-contribute-dialog" aria-label="Đóng">×</button>
+  <span class="eyebrow">MỖI NGƯỜI MỘT TAY</span>
+  <h2 class="hand" id="contribute-dialog-title">Góp một món vào mâm cỗ</h2>
+  <p>Món cỗ của bạn sẽ xuất hiện trên mâm kèm tên bạn. Lời chúc bên trong sẽ được <b>niêm phong bí mật</b> cho đến giờ Phá Cỗ!</p>
+
+  <form id="contribute-form" class="reunion-form" style="margin-top:16px;">
+    <div class="form-group">
+      <label for="contribute-name">Tên của bạn</label>
+      <input id="contribute-name" maxlength="40" required placeholder="Tên bạn muốn hiển thị trên mâm cỗ">
+    </div>
+
+    <div class="form-group">
+      <label for="contribute-item-type">Chọn thức cỗ bạn mang đến</label>
+      <select id="contribute-item-type">
+        <option value="cho-buoi">Chú chó bưởi lông xù mắt hạt nhãn</option>
+        <option value="den-ong-sao">Đèn ông sao 5 cánh giấy kính đỏ rực rỡ</option>
+        <option value="nai-chuoi">Nải chuối tiêu chín trứng cuốc cong cong</option>
+        <option value="com-sen">Gói cốm non bọc lá sen tươi buộc rơm vàng</option>
+        <option value="banh-nuong">Bánh nướng thập cẩm ngũ phúc</option>
+        <option value="banh-deo">Bánh dẻo hoa bưởi hạt sen</option>
+        <option value="hong-na">Đĩa quả hồng đỏ mọng và na mở mắt</option>
+        <option value="qua-thi">Đĩa quả thị chín vàng thơm nức</option>
+        <option value="den-keo-quan">Đèn kéo quân cổ truyền</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="contribute-secret-wish">
+        Tâm thư bí mật gửi người bốc được quà
+        <small id="contribute-wish-count">0/220</small>
+      </label>
+      <textarea id="contribute-secret-wish" minlength="5" maxlength="220" required placeholder="Viết một lời chúc ngọt ngào hoặc dí dỏm. Chỉ người bốc trúng món này khi Phá Cỗ mới đọc được…"></textarea>
+      <p class="form-note">Lời chúc được khóa lại như một phong bao may mắn cho đến khi mở hội!</p>
+    </div>
+
+    <button type="submit" class="gold" id="btn-submit-contribute" style="width:100%;justify-content:center;">
+      Đặt món cỗ lên mâm
+    </button>
+  </form>
+</dialog>
+
+<!-- Modal 2: Xem Chi Tiết Món Cỗ (Inspect Item) -->
+<dialog id="item-inspect-dialog" class="wish-dialog feast-dialog">
+  <button class="close" id="close-inspect-dialog" aria-label="Đóng">×</button>
+  <span class="eyebrow" id="inspect-eyebrow">MÓN CỖ TRÊN MÂM</span>
+  <h2 class="hand" id="inspect-item-title">Chú Chó Bưởi</h2>
+  
+  <div class="inspect-card">
+    <div class="inspect-sender-row">
+      <span class="inspect-avatar-icon" id="inspect-avatar"></span>
+      <div>
+        <b id="inspect-sender-name">Tuấn Anh</b>
+        <small id="inspect-time">Vừa góp vào mâm cỗ</small>
+      </div>
+    </div>
+
+    <!-- Sealed State (When not unsealed for this viewer) -->
+    <div class="inspect-sealed-box" id="inspect-sealed-box">
+      <span class="seal-mark">✦ NIÊM PHONG ✦</span>
+      <p><b>Lời chúc đang được giấu kín!</b></p>
+      <small>Món quà này đang chờ người có duyên bốc được khi Chủ xị mở hội Phá Cỗ.</small>
+    </div>
+
+    <!-- Unsealed State (When viewer is the lucky receiver) -->
+    <div class="inspect-unsealed-box" id="inspect-unsealed-box" hidden>
+      <span class="unseal-mark">☾ LỜI CHÚC DÀNH RIÊNG CHO BẠN ☾</span>
+      <blockquote id="inspect-secret-content"></blockquote>
+      <div class="inspect-thank-row" id="inspect-thank-row">
+        <button class="gold" id="btn-thank-sender">Gửi lời cảm ơn bạn ấy</button>
+      </div>
+      <p class="inspect-thanked-note" id="inspect-thanked-note" hidden>Bạn đã gửi lời cảm ơn ấm áp đến người tặng!</p>
+    </div>
+  </div>
+</dialog>
+
+<!-- Modal 3: Hái Lộc Phá Cỗ (Lucky Draw Celebration) -->
+<dialog id="lucky-draw-dialog" class="wish-dialog feast-dialog lucky-dialog">
+  <button class="close" id="close-lucky-dialog" aria-label="Đóng">×</button>
+  <span class="eyebrow">HÁI LỘC ĐÊM RẰM</span>
+  <h2 class="hand" id="lucky-heading">Chúc mừng bạn!</h2>
+  
+  <div class="lucky-result-wrap">
+    <div class="lucky-gift-icon-wrap" id="lucky-gift-icon"></div>
+    <p class="lucky-announcement" id="lucky-announcement">
+      Bạn đã có duyên bốc trúng <b id="lucky-item-name">Chú chó bưởi</b> do <b id="lucky-sender-name">Tuấn Anh</b> chuẩn bị!
+    </p>
+
+    <div class="wish-paper lucky-wish-paper">
+      <span>☾</span>
+      <p class="paper-kicker">TÂM THƯ BÍ MẬT ĐÃ ĐƯỢC MỞ KHÓA</p>
+      <blockquote id="lucky-secret-wish"></blockquote>
+      <p class="paper-signer" id="lucky-signer"></p>
+    </div>
+
+    <div class="dialog-actions" style="margin-top:18px;">
+      <button class="gold" id="btn-lucky-thank">Gửi lời cảm ơn người tặng</button>
+      <button class="outline" id="btn-save-lucky-card">Lưu vào Trang của bạn</button>
+    </div>
+  </div>
+</dialog>
+
+<div id="toast" role="status" aria-live="polite"></div>
+<script src="app.js?v=20260921l"></script>
+</body>
+</html>

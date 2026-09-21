@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#080f1d">
+<title>Bầu trời Trung Thu · Trung Thu 2026</title>
+<meta name="description" content="Nhận một lời chúc, gửi một chút yêu thương. Cùng thắp sáng bầu trời Trung Thu 2026.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='12' fill='%23080f1d'/%3E%3Cpath d='M28 7A14 14 0 1 0 33 28 14 14 0 0 1 28 7' fill='%23f2c572'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600&family=Charm:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css?v=20260921l">
+</head>
+<body data-page="sky">
+<div id="atmosphere" aria-hidden="true"></div>
+
+<header>
+  <a class="brand" href="index.html">
+    <span class="brand-moon">☾</span>
+    <span>Dưới Ánh Trăng<small>TRUNG THU · 2026</small></span>
+  </a>
+  <nav aria-label="Điều hướng">
+    <a href="index.html">Trang chủ</a>
+    <a href="wishes.html">Lời chúc</a>
+    <a href="sky.html" class="active">Bầu trời</a>
+    <a href="create-reunion.html">Bánh đoàn viên</a>
+    <a href="create-feast.html">Góp cỗ</a>
+    <a href="profile.html">Trang của bạn</a>
+    <a href="about.html">Về đêm trăng</a>
+  </nav>
+  <button class="icon-button music-playing" id="music" aria-label="Tắt nhạc" title="Tắt nhạc"><svg viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path class="music-wave-1" d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path class="music-wave-2" d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg></button>
+</header>
+
+<div class="page-utility">
+  <a href="index.html"><svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Trang chủ</a>
+  <a href="about.html">Về đêm trăng này <svg viewBox="0 0 24 24"><path d="M7 17L17 7M7 7h10v10"/></svg></a>
+</div>
+
+<main>
+  <div class="sky-view section">
+    <div class="section-title">
+      <span class="eyebrow">CHÚNG MÌNH DƯỚI CÙNG MỘT VẦNG TRĂNG</span>
+      <h2 class="hand">Bầu trời Trung Thu</h2>
+      <p>Những ngọn đèn mang tâm tư đang bay qua. Chạm vào một chiếc bất kỳ để đọc lời chúc ẩn giấu bên trong.</p>
+    </div>
+
+    <div id="sky-lanterns" class="sky-lanterns" aria-label="Những chiếc đèn lồng mang lời chúc"></div>
+
+    <div class="sky-actions">
+      <a class="gold" href="write.html" style="font-size:13.5px;padding:12px 24px;">
+        <svg class="btn-icon" style="stroke:#2c1b0d;" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+        Thả ngọn đèn ước nguyện
+      </a>
+      <a class="outline" href="wishes.html">
+        <svg class="btn-icon" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        Đọc toàn bộ Hòm thư
+      </a>
+    </div>
+  </div>
+</main>
+
+<dialog id="welcome" class="welcome">
+  <div class="welcome-inner">
+    <span class="eyebrow">DƯỚI ÁNH TRĂNG · 2026</span>
+    <h2 class="hand">Chào bạn!</h2>
+    <p>Để trăng gửi trao món quà ấm áp đến đúng bạn, và thắp sáng tên bạn trên chiếc đèn lồng mùa đoàn viên…</p>
+    <form id="name-form">
+      <label for="visitor-name">Cho mình biết tên của bạn nhé?</label>
+      <input id="visitor-name" maxlength="40" placeholder="Nhập tên của bạn…" required autocomplete="given-name">
+      <button type="submit" class="gold">
+        <svg class="btn-icon" style="stroke:#2c1b0d;" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        Bắt đầu mùa trăng
+      </button>
+    </form>
+    <small>♫ &nbsp; Chạm biểu tượng nốt nhạc góc phải để lắng nghe khúc ca đêm trăng</small>
+  </div>
+</dialog>
+
+<dialog id="wish-dialog" class="wish-dialog">
+  <button class="close" id="close-wish-dialog" aria-label="Đóng">×</button>
+  <span class="eyebrow" id="dialog-kicker">MỘT LỜI CHÚC DÀNH RIÊNG CHO BẠN</span>
+  <h2 class="hand" id="dialog-title">Trăng gửi bạn một lời…</h2>
+  <div class="wish-paper">
+    <span>☾</span>
+    <blockquote id="received-content"></blockquote>
+    <p id="received-sender"></p>
+  </div>
+  <div class="wish-dialog-like-bar" style="display:flex;justify-content:center;margin:12px 0 6px;">
+    <button type="button" class="wish-like-btn" id="dialog-like-btn">
+      <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+      <span id="dialog-like-label">Thả tim</span>
+      <span id="dialog-like-count" style="margin-left:2px;font-weight:600;">0</span>
+    </button>
+  </div>
+  <div class="dialog-actions" id="received-actions">
+    <button class="outline" id="save-image">
+      <svg class="btn-icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Lưu thành ảnh
+    </button>
+    <button class="outline" id="share-wish">
+      <svg class="btn-icon" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+      Chia sẻ
+    </button>
+  </div>
+  <button class="gold" id="leave-wish">
+    <svg class="btn-icon" style="stroke:#2c1b0d;" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+    Để lại một lời chúc
+  </button>
+</dialog>
+
+<dialog id="qr-dialog" class="wish-dialog">
+  <button class="close" id="close-qr" aria-label="Đóng mã QR">×</button>
+  <h2 class="hand">Gửi một mùa trăng</h2>
+  <div id="site-qrcode" class="site-qrcode-wrap"></div>
+  <p>Quét mã để cùng ghé thăm Dưới Ánh Trăng.</p>
+  <p class="demo-note" id="site-qr-url" style="word-break:break-all;font-size:12px;opacity:0.85;margin-bottom:14px;"></p>
+  <a class="gold" id="download-site-qr" href="#" download="duoi-anh-trang-qr.png">Tải mã QR (PNG) ↓</a>
+</dialog>
+
+<div id="toast" role="status" aria-live="polite"></div>
+<script src="app.js?v=20260921l"></script>
+</body>
+</html>

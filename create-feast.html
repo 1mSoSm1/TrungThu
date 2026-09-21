@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#080f1d">
+<title>Khởi Tạo Mâm Cỗ Trông Trăng · Trung Thu 2026</title>
+<meta name="description" content="Khởi tạo mâm cỗ đoàn viên, mời bạn bè cùng chung tay góp cỗ và cùng phá cỗ đêm rằm.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600&family=Charm:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css?v=20260921l">
+</head>
+<body data-page="create-feast">
+<div id="atmosphere" aria-hidden="true"></div>
+
+<header>
+  <a class="brand" href="index.html">
+    <span class="brand-moon">☾</span>
+    <span>Dưới Ánh Trăng<small>TRUNG THU · 2026</small></span>
+  </a>
+  <nav aria-label="Điều hướng">
+    <a href="index.html">Trang chủ</a>
+    <a href="wishes.html">Lời chúc</a>
+    <a href="sky.html">Bầu trời</a>
+    <a href="create-reunion.html">Bánh đoàn viên</a>
+    <a class="active" href="create-feast.html">Góp cỗ</a>
+    <a href="profile.html">Trang của bạn</a>
+    <a href="about.html">Về đêm trăng</a>
+  </nav>
+  <button class="icon-button music-playing" id="music" aria-label="Tắt nhạc" title="Tắt nhạc"><svg viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path class="music-wave-1" d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path class="music-wave-2" d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg></button>
+</header>
+
+<div class="page-utility">
+  <a href="index.html">← Trang chủ</a>
+  <a href="profile.html">Mâm cỗ của bạn ↗</a>
+</div>
+
+<main>
+  <section class="section feast-create-section">
+    <div class="section-title">
+      <span class="eyebrow">MỖI NGƯỜI MỘT TAY · CẢ HỘI PHÁ CỖ</span>
+      <h1 class="hand">Góp Cỗ Trông Trăng</h1>
+      <p>Khởi tạo một mâm cỗ lớn cho lớp học, gia đình hoặc hội bạn. Mọi người cùng chung tay góp thức quả dân gian, gửi gắm lời chúc bí mật và cùng nhau mở hội phá cỗ.</p>
+    </div>
+
+    <div class="reunion-create-grid">
+      <form id="feast-create-form" class="reunion-form">
+        <div class="form-group">
+          <label for="feast-owner">Tên người khởi tạo (Chủ xị)</label>
+          <input id="feast-owner" maxlength="40" required placeholder="Ví dụ: Tuấn Anh (Lớp trưởng) / Minh Thảo">
+        </div>
+
+        <div class="form-group">
+          <label for="feast-title">Tên Mâm Cỗ Đoàn Viên</label>
+          <input id="feast-title" maxlength="60" required placeholder="Ví dụ: Mâm cỗ Lớp 12A3 / Đại cỗ Nhà Ngoại / Xóm 502">
+        </div>
+
+        <fieldset class="reunion-fieldset">
+          <legend>Chọn phong cách mâm cỗ</legend>
+          <div class="reunion-choice-grid">
+            <label class="reunion-choice">
+              <input type="radio" name="feast-style" value="dong" checked>
+              <span class="choice-art box-lacquer">◎</span>
+              <b>Mâm đồng cổ truyền</b>
+              <small>Sang trọng, sáng rực ánh trăng</small>
+            </label>
+            <label class="reunion-choice">
+              <input type="radio" name="feast-style" value="tre">
+              <span class="choice-art box-bamboo">▧</span>
+              <b>Mẹt tre lót lá chuối</b>
+              <small>Mộc mạc, đậm hồn quê hương</small>
+            </label>
+            <label class="reunion-choice">
+              <input type="radio" name="feast-style" value="son-mai">
+              <span class="choice-art box-paper">✦</span>
+              <b>Khay gấm hoa sen</b>
+              <small>Trang nhã, ấm áp đoàn viên</small>
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset class="reunion-fieldset">
+          <legend>Quy mô mâm cỗ (Số món quà cùng góp)</legend>
+          <div class="capacity-grid">
+            <label class="capacity-chip"><input type="radio" name="feast-target" value="12"><span><b>12 món</b><small>Nhóm bạn thân · Gia đình</small></span></label>
+            <label class="capacity-chip"><input type="radio" name="feast-target" value="25" checked><span><b>25 món</b><small>Tập thể lớp · Câu lạc bộ</small></span></label>
+            <label class="capacity-chip"><input type="radio" name="feast-target" value="50"><span><b>50 món</b><small>Khối trường · Hội nhóm lớn</small></span></label>
+            <label class="capacity-chip"><input type="radio" name="feast-target" value="100"><span><b>100 món</b><small>Đại lễ rực rỡ · Toàn trường</small></span></label>
+            <label class="capacity-chip"><input type="radio" name="feast-target" value="open"><span><b>Mở rộng</b><small>Góp bao nhiêu cũng vui</small></span></label>
+          </div>
+        </fieldset>
+
+        <fieldset class="reunion-fieldset" id="feast-deadline-fieldset">
+          <legend>Thời khắc mở hội Phá Cỗ (Hạn chót đếm ngược)</legend>
+          <div class="capacity-grid">
+            <label class="capacity-chip"><input type="radio" name="feast-deadline" value="manual" checked><span><b>Thủ công</b><small>Chủ xị tự bấm mở</small></span></label>
+            <label class="capacity-chip"><input type="radio" name="feast-deadline" value="1h"><span><b>1 giờ nữa</b><small>Phá cỗ tiệc nhanh</small></span></label>
+            <label class="capacity-chip"><input type="radio" name="feast-deadline" value="2h"><span><b>2 giờ nữa</b><small>Trong buổi liên hoan</small></span></label>
+            <label class="capacity-chip"><input type="radio" name="feast-deadline" value="tonight"><span><b>20:00 Đêm Rằm</b><small>Thời khắc hoàng đạo</small></span></label>
+            <label class="capacity-chip"><input type="radio" name="feast-deadline" value="24h"><span><b>24 giờ nữa</b><small>Cả ngày mai</small></span></label>
+          </div>
+        </fieldset>
+
+        <div class="form-group">
+          <label for="feast-message">Lời mở hội của bạn gửi đến mọi người <small id="feast-message-count">0/280</small></label>
+          <textarea id="feast-message" minlength="10" maxlength="280" required placeholder="Trung Thu đến rồi, mời cả nhà cùng vào góp cỗ để tối nay chúng mình cùng phá cỗ nhé…"></textarea>
+        </div>
+
+        <fieldset class="reunion-fieldset">
+          <legend>Món cỗ đầu tiên của Chủ xị</legend>
+          <div class="form-group">
+            <label for="feast-owner-item">Chọn món đồ bạn mang đến mâm cỗ</label>
+            <select id="feast-owner-item">
+              <option value="cho-buoi">Chú chó bưởi lông xù mắt hạt nhãn (Linh hồn mâm cỗ)</option>
+              <option value="den-ong-sao">Đèn ông sao 5 cánh giấy kính đỏ rực rỡ</option>
+              <option value="nai-chuoi">Nải chuối tiêu chín trứng cuốc cong cong</option>
+              <option value="com-sen">Gói cốm non bọc lá sen tươi buộc rơm vàng</option>
+              <option value="banh-nuong">Cặp bánh nướng thập cẩm ngũ phúc</option>
+              <option value="banh-deo">Cặp bánh dẻo hoa bưởi hạt sen</option>
+              <option value="hong-na">Đĩa quả hồng đỏ mọng và na mở mắt</option>
+              <option value="qua-thi">Đĩa thị chín vàng thơm ngát cổ tích</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="feast-owner-wish">Lời chúc bí mật kẹp trong món quà <small id="feast-owner-wish-count">0/200</small></label>
+            <textarea id="feast-owner-wish" minlength="5" maxlength="200" required placeholder="Lời chúc này sẽ được niêm phong! Chỉ người may mắn bốc được món này khi Phá Cỗ mới đọc được…"></textarea>
+            <p class="form-note">Lời chúc sẽ được giấu kín như một phong bao may mắn cho đến khi mở hội Phá Cỗ!</p>
+          </div>
+        </fieldset>
+
+        <button class="gold reunion-submit" type="submit">Khởi tạo Mâm Cỗ & Lấy liên kết mời</button>
+      </form>
+
+      <aside class="reunion-preview" aria-label="Xem trước mâm cỗ">
+        <span class="eyebrow">XEM TRƯỚC ĐẠI CỖ</span>
+        <h2 class="hand" id="feast-preview-title">Mâm cỗ Lớp 12A3</h2>
+        <div class="mini-feast-stage" id="feast-preview-stage">
+          <div class="mini-feast-platter" id="feast-preview-platter">
+            <div class="mini-feast-center"><span>☾</span></div>
+            <div class="mini-feast-items" id="feast-preview-items">
+              <span class="mini-item item-cho-buoi" title="Chó bưởi"><img src="assets/item-cho-buoi.webp" alt="Chó bưởi"></span>
+              <span class="mini-item item-den-ong-sao" title="Đèn ông sao"><img src="assets/item-den-ong-sao.webp" alt="Đèn ông sao"></span>
+              <span class="mini-item item-nai-chuoi" title="Nải chuối"><img src="assets/item-nai-chuoi.webp" alt="Nải chuối"></span>
+              <span class="mini-item item-com-sen" title="Cốm non"><img src="assets/item-com-vong.webp" alt="Cốm non"></span>
+              <span class="mini-item item-banh-nuong" title="Bánh nướng"><img src="assets/mooncake-full.webp" alt="Bánh nướng"></span>
+            </div>
+          </div>
+        </div>
+        <p id="feast-preview-message">Một mâm cỗ đầy đặn đang chờ từng người bạn chung tay vun vén.</p>
+        <div class="preview-detail">
+          <span id="feast-preview-target">Mục tiêu: 25 món cỗ</span>
+          <span>•</span>
+          <span id="feast-preview-style">Mâm đồng cổ truyền</span>
+        </div>
+      </aside>
+    </div>
+  </section>
+</main>
+
+<dialog id="feast-result-dialog" class="wish-dialog reunion-result-dialog">
+  <button class="close" id="close-feast-result" aria-label="Đóng">×</button>
+  <span class="eyebrow">MÂM CỖ ĐÃ SẴN SÀNG</span>
+  <h2 class="hand">Rủ mọi người cùng vào góp cỗ!</h2>
+  <p>Sao chép liên kết dưới đây và gửi vào nhóm Zalo, Messenger, Facebook của lớp hoặc gia đình bạn.</p>
+  <div class="share-link-row">
+    <input id="feast-link-output" readonly>
+    <button class="gold" id="copy-feast-link">Sao chép</button>
+  </div>
+  <div class="dialog-actions">
+    <button class="outline" id="share-feast-link">Chia sẻ link</button>
+    <a class="gold" id="open-feast-link" href="feast.html">Vào Mâm Cỗ Ngay</a>
+  </div>
+</dialog>
+
+<div id="toast" role="status" aria-live="polite"></div>
+<script src="app.js?v=20260921l"></script>
+</body>
+</html>
