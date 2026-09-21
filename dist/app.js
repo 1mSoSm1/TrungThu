@@ -2145,7 +2145,7 @@ function initCreateReunionPage() {
     const boxNames = { tre: 'Hộp mây tre đan', 'son-mai': 'Hộp sơn mài hoa sen', 'bao-cap': 'Hộp giấy báo xưa' };
 
     const previewBox = $('#reunion-preview-box');
-    const previewBoxName = $('#reunion-preview-box-name');
+    const previewBoxName = $('#reunion-preview-box-tag') || $('#reunion-preview-box-name');
     const previewContainer = $('.reunion-preview');
     const previewCake = $('#reunion-preview-cake');
 
