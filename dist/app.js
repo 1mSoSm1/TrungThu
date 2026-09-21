@@ -883,6 +883,37 @@ function getSiteShareUrl() {
   return `${url.origin}${path}`;
 }
 
+function ensureQrDialog() {
+  let dialog = $('#qr-dialog');
+  if (!dialog) {
+    dialog = document.createElement('dialog');
+    dialog.id = 'qr-dialog';
+    dialog.className = 'wish-dialog';
+    dialog.innerHTML = `
+      <button class="close" id="close-qr" aria-label="Đóng mã QR">×</button>
+      <h2 class="hand">Gửi một mùa trăng</h2>
+      <div id="site-qrcode" class="site-qrcode-wrap"></div>
+      <p>Quét mã để cùng ghé thăm Dưới Ánh Trăng.</p>
+      <p class="demo-note" id="site-qr-url" style="word-break:break-all;font-size:12px;opacity:0.85;margin-bottom:14px;"></p>
+      <a class="gold" id="download-site-qr" href="#" download="duoi-anh-trang-qr.png">Tải mã QR (PNG) ↓</a>
+    `;
+    document.body.appendChild(dialog);
+  }
+  return dialog;
+}
+
+function openSiteQrDialog() {
+  const qrDialog = ensureQrDialog();
+  renderSiteQrCode();
+  if (qrDialog) {
+    try {
+      if (!qrDialog.open) qrDialog.showModal();
+    } catch {
+      qrDialog.setAttribute('open', '');
+    }
+  }
+}
+
 let siteQrInstance = null;
 function renderSiteQrCode() {
   const qrContainer = $('#site-qrcode');
@@ -1436,14 +1467,14 @@ function bindPageEvents() {
   }
 
   // Dialog close buttons and outside click handling
-  $('dialog .close, #close-wish-dialog, #close-qr').forEach(btn => {
+  $$('dialog .close, #close-wish-dialog, #close-qr').forEach(btn => {
     btn.onclick = () => {
       const dlg = btn.closest('dialog') || $('#wish-dialog') || $('#qr-dialog');
       if (dlg) dlg.close();
     };
   });
 
-  $('dialog').forEach(dlg => {
+  $$('dialog').forEach(dlg => {
     dlg.onclick = (e) => {
       if (e.target === dlg) dlg.close();
     };
@@ -1457,18 +1488,10 @@ function bindPageEvents() {
     };
   }
 
-  $('#show-qr, [data-action="show-qr"]').forEach(btn => {
+  $$('#show-qr, [data-action="show-qr"]').forEach(btn => {
     btn.onclick = (e) => {
       e.preventDefault();
-      renderSiteQrCode();
-      const qrDialog = $('#qr-dialog');
-      if (qrDialog) {
-        try {
-          if (!qrDialog.open) qrDialog.showModal();
-        } catch {
-          qrDialog.setAttribute('open', '');
-        }
-      }
+      openSiteQrDialog();
     };
   });
 }
@@ -1489,6 +1512,27 @@ function updateActiveNav(page) {
     } catch (_) {}
   }
 }
+
+// Global event delegation for QR popup and dialogs
+document.addEventListener('click', (e) => {
+  const qrBtn = e.target.closest('#show-qr, [data-action="show-qr"]');
+  if (qrBtn) {
+    e.preventDefault();
+    openSiteQrDialog();
+    return;
+  }
+
+  const closeBtn = e.target.closest('dialog .close, #close-qr, #close-wish-dialog');
+  if (closeBtn) {
+    const dlg = closeBtn.closest('dialog');
+    if (dlg) dlg.close();
+    return;
+  }
+
+  if (e.target.tagName === 'DIALOG' && e.target.open) {
+    e.target.close();
+  }
+});
 
 /* PJAX Router: Continuous Audio & Seamless Page Transitions */
 async function navigateTo(url, replaceState = false) {
