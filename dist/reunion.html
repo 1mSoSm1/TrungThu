@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#080f1d">
+<title>Bàn trà đoàn viên · Trung Thu 2026</title><meta name="description" content="Cùng người thân chia bánh và nâng chén trà dưới ánh trăng.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600&family=Charm:wght@400;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="style.css?v=20260921e">
+</head>
+<body data-page="reunion">
+<div id="atmosphere" aria-hidden="true"></div>
+<header><a class="brand" href="index.html"><span class="brand-moon">☾</span><span>Dưới Ánh Trăng<small>TRUNG THU · 2026</small></span></a><nav aria-label="Điều hướng"><a href="index.html">Trang chủ</a><a href="wishes.html">Lời chúc</a><a href="sky.html">Bầu trời</a><a class="active" href="create-reunion.html">Bánh đoàn viên</a><a href="profile.html">Trang của bạn</a></nav><button class="icon-button" id="music" aria-label="Bật nhạc">♫</button></header>
+<div class="page-utility"><a href="index.html">← Trang chủ</a><a href="create-reunion.html">Mở một bàn trà mới ↗</a></div>
+<main>
+  <section class="section reunion-page">
+    <div id="reunion-loading" class="reunion-loading"><span class="moon-loader">☾</span><p>Đang mở hộp bánh dưới ánh trăng…</p></div>
+    <div id="reunion-error" class="reunion-error" hidden><span>☾</span><h1 class="hand">Chưa tìm thấy bàn trà</h1><p>Liên kết có thể chưa đúng hoặc bàn trà chưa được lưu.</p><a class="gold" href="create-reunion.html">Tạo Bánh Trăng Đoàn Viên</a></div>
+    <div id="reunion-content" hidden>
+      <div class="section-title reunion-heading"><span class="eyebrow">MỘT LỜI MỜI DƯỚI TRĂNG</span><h1 class="hand" id="reunion-table-title">Bàn trà đoàn viên</h1><p><b id="reunion-owner-name"></b> mời bạn cùng chia bánh và ngồi lại bên nhau.</p></div>
+
+      <div class="reunion-layout">
+        <div class="tea-scene" id="tea-scene">
+          <div class="table-moon" aria-hidden="true"></div>
+          <div class="tea-table"><div class="mooncake" id="reunion-mooncake"><span>Đoàn<br>Viên</span></div><div id="reunion-seats" class="reunion-seats"></div></div>
+          <div class="reunion-progress"><div><span id="reunion-progress-bar"></span></div><p id="reunion-progress-text"></p></div>
+          <p class="reunion-complete-message" id="reunion-complete-message" hidden>Trăng đã tròn, bàn trà đã đủ — chúng mình đang ở bên nhau.</p>
+        </div>
+
+        <aside class="reunion-side">
+          <div class="invitation-note"><span>☾</span><blockquote id="reunion-invitation"></blockquote><small id="reunion-menu"></small></div>
+          <form id="reunion-join-form" class="reunion-join-form">
+            <span class="eyebrow">NHẬN MỘT PHẦN BÁNH</span><h2 class="hand" id="reunion-join-title">Ngồi vào bàn trà</h2>
+            <label for="reunion-guest-name">Tên của bạn</label><input id="reunion-guest-name" maxlength="40" required placeholder="Bạn muốn mọi người gọi mình là gì?">
+            <label for="reunion-reply">Một lời đáp cho cả bàn</label><textarea id="reunion-reply" minlength="2" maxlength="180" required placeholder="Mình đã về rồi. Chúc cả nhà một mùa trăng thật ấm áp…"></textarea>
+            <button type="submit" class="gold" id="reunion-join-button">Nhận một miếng bánh & nâng chén trà</button>
+          </form>
+          <div class="reunion-full" id="reunion-full" hidden><b>Bàn trà đã đủ người</b><p>Bạn vẫn có thể ngồi đây, đọc những lời đáp và chung vui dưới ánh trăng.</p></div>
+          <div class="reunion-share"><button class="outline" id="copy-current-reunion">Sao chép liên kết mời</button><button class="outline" id="share-current-reunion">Mời thêm người thân</button></div>
+        </aside>
+      </div>
+
+      <section class="reunion-replies"><div class="section-title"><span class="eyebrow">NHỮNG CHÉN TRÀ ĐÃ ĐƯỢC NÂNG LÊN</span><h2 class="hand">Lời đáp quanh bàn</h2></div><div id="reunion-reply-list" class="reunion-reply-list"></div></section>
+    </div>
+  </section>
+</main>
+<div id="toast" role="status" aria-live="polite"></div><script src="app.js?v=20260921e"></script>
+</body>
+</html>

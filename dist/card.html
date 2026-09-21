@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#080f1d">
+<title>Bức thư ánh trăng · Trung Thu 2026</title>
+<meta name="description" content="Một tấm thiệp bí mật được thắp sáng dưới ánh trăng gửi riêng đến bạn.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='12' fill='%23080f1d'/%3E%3Cpath d='M28 7A14 14 0 1 0 33 28 14 14 0 0 1 28 7' fill='%23f2c572'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600&family=Charm:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css?v=20260921c">
+</head>
+<body data-page="card">
+<div id="atmosphere" aria-hidden="true"></div>
+
+<header>
+  <a class="brand" href="index.html">
+    <span class="brand-moon">☾</span>
+    <span>Dưới Ánh Trăng<small>TRUNG THU · 2026</small></span>
+  </a>
+  <nav aria-label="Điều hướng">
+    <a href="index.html">Trang chủ</a>
+    <a href="wishes.html">Lời chúc</a>
+    <a href="sky.html">Bầu trời</a>
+    <a href="create-card.html">Tạo thiệp</a>
+    <a href="about.html">Về đêm trăng</a>
+  </nav>
+  <button class="icon-button music-playing" id="music" aria-label="Tắt nhạc" title="Tắt nhạc"><svg viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path class="music-wave-1" d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path class="music-wave-2" d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg></button>
+</header>
+
+<div class="page-utility">
+  <a href="index.html"><svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Trang chủ</a>
+  <a href="create-card.html">Tự tạo thiệp riêng <svg viewBox="0 0 24 24"><path d="M7 17L17 7M7 7h10v10"/></svg></a>
+</div>
+
+<main>
+  <div class="section" style="max-width:760px;margin:0 auto;padding-top:clamp(20px, 4vh, 45px);text-align:center;">
+    
+    <!-- State 1: Envelope (Unopened) -->
+    <div id="envelope-view" class="envelope-container">
+      <div class="section-title" style="margin-bottom:24px;">
+        <span class="eyebrow" id="envelope-kicker">MỘT PHONG THƯ ÁNH TRĂNG GỬI ĐẾN BẠN</span>
+        <h2 class="hand" id="envelope-heading" style="font-size:clamp(32px, 6vw, 44px);">Có ai đó đang nhớ về bạn…</h2>
+        <p id="envelope-sub">Chạm vào phong thư hoàng kim để mở lời tâm tình ẩn giấu.</p>
+      </div>
+
+      <div class="royal-envelope" id="btn-open-envelope" role="button" tabindex="0" aria-label="Mở phong thư">
+        <div class="envelope-seal">
+          <svg viewBox="0 0 24 24" style="width:28px;height:28px;stroke:#3b2203;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </div>
+        <div class="envelope-title" id="envelope-recipient-label">Gửi riêng bạn</div>
+        <div class="envelope-prompt">Chạm vào đây để mở thiệp</div>
+      </div>
+    </div>
+
+    <!-- State 2: Letter Revealed -->
+    <div id="letter-view" style="display:none;animation:pageFadeIn 0.5s ease both;">
+      <div class="section-title" style="margin-bottom:20px;">
+        <span class="eyebrow">DƯỚI CÙNG MỘT VẦNG TRĂNG SÁNG</span>
+        <h2 class="hand" style="font-size:clamp(30px, 5.5vw, 40px);">Tâm tình gửi trao</h2>
+      </div>
+
+      <div class="royal-letter" id="revealed-card-letter" style="max-width:540px;margin:0 auto;">
+        <img class="letter-lantern" id="card-lantern-img" src="assets/lantern-ong-sao.webp" alt="Lồng đèn Trung Thu">
+        <div class="recipient-salutation" id="card-recipient-text">Gửi tặng: Bạn thương</div>
+        <span class="letter-divider">✧ ───── ☾ ───── ✧</span>
+        <div class="letter-message" id="card-message-text">...</div>
+        <div class="letter-sender" id="card-sender-text">— Người gửi</div>
+        <div class="letter-timestamp" id="card-time-text">Mùa trăng rằm tháng Tám · 2026</div>
+        <div class="letter-seal-stamp" id="card-seal-stamp">Đoàn Viên</div>
+      </div>
+
+      <div class="card-action-row" style="margin-top:28px;">
+        <button class="outline" id="btn-save-recipient-card">
+          <svg class="btn-icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Lưu thiệp thành ảnh kỷ niệm
+        </button>
+        <a class="gold" href="create-card.html" style="padding:11px 22px;font-size:13px;">
+          <svg class="btn-icon" style="stroke:#2c1b0d;" viewBox="0 0 24 24"><path d="M12 7.5c-1.8-2.2-4.5-2.2-4.5-.3 0 1.6 3 2.8 4.5 2.8s4.5-1.2 4.5-2.8c0-1.9-2.7-1.9-4.5.3z" fill="none"/><rect x="3" y="7.5" width="18" height="3.5" rx="1.5"/><path d="M5 11v8.5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V11"/><path d="M12 7.5V21.5"/></svg>
+          Tạo thiệp gửi người bạn thương
+        </a>
+        <a class="outline" href="index.html">
+          <svg class="btn-icon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          Ghé thăm Đêm Trăng
+        </a>
+      </div>
+    </div>
+
+    <!-- State 3: Card Not Found / Error -->
+    <div id="card-error-view" style="display:none;padding:40px 20px;">
+      <div class="empty-notice" style="background:rgba(12,20,35,0.75);border:1px solid var(--line);border-radius:18px;padding:40px 24px;max-width:500px;margin:0 auto;">
+        <img src="assets/lantern-ong-sao.webp" style="width:52px;height:52px;margin:0 auto 12px;display:block;" alt="Lồng đèn">
+        <h3 style="color:var(--gold);font-size:20px;margin-bottom:10px;">Chưa tìm thấy tấm thiệp này</h3>
+        <p style="color:#cbb595;font-size:14px;line-height:1.6;margin-bottom:20px;">Có thể liên kết thiệp chưa chính xác hoặc đã hết thời gian lưu trữ.</p>
+        <a href="create-card.html" class="gold" style="padding:11px 22px;display:inline-block;font-size:13.5px;">Tự tạo một tấm thiệp mới</a>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Passcode Dialog (If Protected) -->
+<dialog id="passcode-dialog" class="wish-dialog" style="max-width:420px;">
+  <span class="eyebrow">THIỆP ĐƯỢC BẢO MẬT</span>
+  <h2 class="hand" style="font-size:32px;margin:10px 0 12px;">Nhập mật khẩu</h2>
+  <p style="font-size:13.5px;color:#dfd7d0;margin-bottom:16px;">Người gửi đã đặt một mật mã ngọt ngào cho tấm thiệp này.</p>
+  <form id="passcode-form">
+    <input type="text" id="passcode-input" placeholder="Nhập mật khẩu mở thiệp..." required style="width:100%;padding:12px;border-radius:10px;border:1px solid rgba(216,184,121,0.4);background:#fff5e8;color:#332a2c;font-size:15px;margin-bottom:16px;text-align:center;">
+    <button type="submit" class="gold" style="width:100%;padding:12px;">Mở thiệp ngay</button>
+  </form>
+</dialog>
+
+<div id="toast" role="status" aria-live="polite"></div>
+<script src="qrcode.min.js"></script>
+<script src="app.js?v=20260921c"></script>
+</body>
+</html>

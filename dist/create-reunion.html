@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#080f1d">
+<title>Tạo Bánh Trăng Đoàn Viên · Trung Thu 2026</title>
+<meta name="description" content="Mời người thân cùng chia một chiếc bánh và quây quần bên bàn trà đêm rằm.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600&family=Charm:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css?v=20260921e">
+</head>
+<body data-page="create-reunion">
+<div id="atmosphere" aria-hidden="true"></div>
+<header>
+  <a class="brand" href="index.html"><span class="brand-moon">☾</span><span>Dưới Ánh Trăng<small>TRUNG THU · 2026</small></span></a>
+  <nav aria-label="Điều hướng">
+    <a href="index.html">Trang chủ</a><a href="wishes.html">Lời chúc</a><a href="sky.html">Bầu trời</a><a class="active" href="create-reunion.html">Bánh đoàn viên</a><a href="profile.html">Trang của bạn</a>
+  </nav>
+  <button class="icon-button" id="music" aria-label="Bật nhạc">♫</button>
+</header>
+<div class="page-utility"><a href="index.html">← Trang chủ</a><a href="profile.html">Tủ bánh của bạn ↗</a></div>
+
+<main>
+  <section class="section reunion-create-section">
+    <div class="section-title">
+      <span class="eyebrow">MỜI NGƯỜI THƯƠNG VỀ CHUNG MỘT BÀN TRÀ</span>
+      <h1 class="hand">Bánh Trăng Đoàn Viên</h1>
+      <p>Chuẩn bị một chiếc bánh chung. Mỗi người nhận một phần, nâng một chén trà và để lại một lời đáp.</p>
+    </div>
+
+    <div class="reunion-create-grid">
+      <form id="reunion-create-form" class="reunion-form">
+        <div class="form-group"><label for="reunion-owner">Tên chủ bàn trà</label><input id="reunion-owner" maxlength="40" required placeholder="Tên của bạn"></div>
+        <div class="form-group"><label for="reunion-title">Tên buổi đoàn viên</label><input id="reunion-title" maxlength="60" required placeholder="Ví dụ: Nhà mình dưới trăng"></div>
+
+        <fieldset class="reunion-fieldset">
+          <legend>Chọn vỏ hộp</legend>
+          <div class="reunion-choice-grid">
+            <label class="reunion-choice"><input type="radio" name="box-style" value="tre" checked><span class="choice-art box-bamboo">▧</span><b>Mây tre đan</b><small>Mộc mạc, gần gũi</small></label>
+            <label class="reunion-choice"><input type="radio" name="box-style" value="son-mai"><span class="choice-art box-lacquer">✦</span><b>Sơn mài hoa sen</b><small>Trang trọng, ấm áp</small></label>
+            <label class="reunion-choice"><input type="radio" name="box-style" value="bao-cap"><span class="choice-art box-paper">月</span><b>Giấy báo xưa</b><small>Hoài niệm mùa trăng</small></label>
+          </div>
+        </fieldset>
+
+        <div class="reunion-pair-grid">
+          <div class="form-group"><label for="reunion-flavor">Vị bánh</label><select id="reunion-flavor"><option value="Thập cẩm xá xíu lá chanh">Thập cẩm xá xíu lá chanh</option><option value="Đậu xanh trứng muối">Đậu xanh trứng muối</option><option value="Dẻo hạt sen hoa bưởi">Dẻo hạt sen hoa bưởi</option><option value="Dẻo cốm non lá sen">Dẻo cốm non lá sen</option></select></div>
+          <div class="form-group"><label for="reunion-tea">Thức trà</label><select id="reunion-tea"><option value="Trà sen Tây Hồ">Trà sen Tây Hồ</option><option value="Trà hoa cúc mật ong">Trà hoa cúc mật ong</option><option value="Trà mạn Thái Nguyên">Trà mạn Thái Nguyên</option></select></div>
+        </div>
+
+        <fieldset class="reunion-fieldset">
+          <legend>Quy mô bàn trà (Số người cùng thưởng bánh)</legend>
+          <div class="capacity-grid">
+            <label class="capacity-chip"><input type="radio" name="reunion-capacity" value="2"><span><b>2 người</b><small>Tâm tình 1 người · Song ẩm</small></span></label>
+            <label class="capacity-chip"><input type="radio" name="reunion-capacity" value="4" checked><span><b>4 người</b><small>Gia đình nhỏ</small></span></label>
+            <label class="capacity-chip"><input type="radio" name="reunion-capacity" value="6"><span><b>6 người</b><small>Nhóm thân thiết</small></span></label>
+            <label class="capacity-chip"><input type="radio" name="reunion-capacity" value="8"><span><b>8 người</b><small>Đại gia đình</small></span></label>
+            <label class="capacity-chip"><input type="radio" name="reunion-capacity" value="12"><span><b>12 người</b><small>Hội bạn thân · Nhóm lớn</small></span></label>
+            <label class="capacity-chip"><input type="radio" name="reunion-capacity" value="20"><span><b>20 người</b><small>Lớp học · Phòng ban</small></span></label>
+          </div>
+          <div class="custom-capacity-row">
+            <label class="capacity-chip custom-capacity-chip">
+              <input type="radio" name="reunion-capacity" value="custom" id="capacity-custom-radio">
+              <span><b>Tự nhập số</b><small>Tùy chọn quy mô</small></span>
+            </label>
+            <div class="custom-capacity-input-wrap" id="custom-capacity-wrap" hidden>
+              <input type="number" id="custom-capacity-input" min="2" max="60" placeholder="Số người (2-60)" value="10">
+              <span class="custom-capacity-unit">người</span>
+            </div>
+          </div>
+        </fieldset>
+
+        <div class="form-group"><label for="reunion-message">Lời mời đặt dưới nắp hộp <small id="reunion-message-count">0/260</small></label><textarea id="reunion-message" minlength="10" maxlength="260" required placeholder="Trăng tròn rồi, về ngồi chung với mình một bàn trà nhé…"></textarea></div>
+        <button class="gold reunion-submit" type="submit">Mở bàn trà & tạo liên kết mời</button>
+        <p class="form-note">Bạn được tính là chỗ đầu tiên. Người thân mở cùng liên kết để nhận những phần bánh còn lại.</p>
+      </form>
+
+      <aside class="reunion-preview" aria-label="Xem trước bàn trà">
+        <span class="eyebrow">XEM TRƯỚC</span><h2 class="hand" id="reunion-preview-title">Nhà mình dưới trăng</h2>
+        <div class="mini-tea-table"><div class="mini-mooncake"><span>福</span></div><i></i><i></i><i></i><i></i></div>
+        <p id="reunion-preview-message">Một chiếc bánh tròn đang chờ những người thương cùng trở về.</p>
+        <div class="preview-detail"><span id="reunion-preview-flavor">Thập cẩm xá xíu lá chanh</span><span>•</span><span id="reunion-preview-tea">Trà sen Tây Hồ</span></div>
+      </aside>
+    </div>
+  </section>
+</main>
+
+<dialog id="reunion-result-dialog" class="wish-dialog reunion-result-dialog">
+  <button class="close" id="close-reunion-result" aria-label="Đóng">×</button><span class="eyebrow">BÀN TRÀ ĐÃ SẴN SÀNG</span><h2 class="hand">Mời mọi người về đoàn viên</h2>
+  <p>Sao chép liên kết này và gửi vào nhóm gia đình hoặc bạn bè.</p>
+  <div class="share-link-row"><input id="reunion-link-output" readonly><button class="gold" id="copy-reunion-link">Sao chép</button></div>
+  <div class="dialog-actions"><button class="outline" id="share-reunion-link">Chia sẻ lời mời</button><a class="gold" id="open-reunion-link" href="reunion.html">Vào bàn trà</a></div>
+</dialog>
+<div id="toast" role="status" aria-live="polite"></div>
+<script src="app.js?v=20260921e"></script>
+</body>
+</html>
