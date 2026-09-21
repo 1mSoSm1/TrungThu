@@ -4,6 +4,7 @@ const FIREBASE_DB_URL = 'https://trung-thu-1dc8f-default-rtdb.asia-southeast1.fi
 
 let state = {
   visitorId: '',
+  deviceId: '',
   name: '',
   created: new Date().toISOString(),
   claim: null,
@@ -22,6 +23,87 @@ try {
 if (!state.visitorId) {
   state.visitorId = 'user_' + (globalThis.crypto?.randomUUID?.() || Date.now().toString(36) + Math.random().toString(36).slice(2, 9));
 }
+
+// Hardware Device Fingerprint (Nhận diện thiết bị vật lý qua các trình duyệt khác nhau trên cùng 1 máy)
+async function hashFingerprint(str) {
+  if (globalThis.crypto?.subtle?.digest) {
+    try {
+      const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+      const arr = Array.from(new Uint8Array(buf));
+      return 'dev_' + arr.map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 24);
+    } catch (_) {}
+  }
+  let h1 = 0xdeadbeef ^ 0, h2 = 0x41c6ce57 ^ 0;
+  for (let i = 0, ch; i < str.length; i++) {
+    ch = str.charCodeAt(i);
+    h1 = Math.imul(h1 ^ ch, 2654435761);
+    h2 = Math.imul(h2 ^ ch, 1597334677);
+  }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  const num = 4294967296 * (2097151 & h2) + (h1 >>> 0);
+  return 'dev_' + num.toString(16);
+}
+
+async function getDeviceFingerprint() {
+  const parts = [];
+  try {
+    const w = screen.width || 0, h = screen.height || 0, cd = screen.colorDepth || 0;
+    parts.push(`res:${Math.min(w, h)}x${Math.max(w, h)}x${cd}`);
+  } catch (_) { parts.push('res:def'); }
+
+  try {
+    parts.push(`cpu:${navigator.hardwareConcurrency || 4}`);
+  } catch (_) { parts.push('cpu:def'); }
+
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+    const tzo = new Date().getTimezoneOffset();
+    parts.push(`tz:${tz}:${tzo}`);
+  } catch (_) { parts.push('tz:def'); }
+
+  try {
+    parts.push(`plt:${navigator.platform || ''}`);
+  } catch (_) { parts.push('plt:def'); }
+
+  try {
+    const canvas = document.createElement('canvas');
+    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+    if (gl) {
+      const ext = gl.getExtension('WEBGL_debug_renderer_info');
+      if (ext) {
+        let renderer = gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) || '';
+        renderer = renderer.replace(/ANGLE \(/i, '').replace(/\s*Direct3D.*$/i, '').replace(/vs_\d+_\d+\s*ps_\d+_\d+/i, '').replace(/[(),]/g, '').trim();
+        parts.push(`gpu:${renderer}`);
+      }
+    }
+  } catch (_) { parts.push('gpu:none'); }
+
+  try {
+    const cvs = document.createElement('canvas');
+    cvs.width = 160; cvs.height = 40;
+    const ctx = cvs.getContext('2d');
+    if (ctx) {
+      ctx.textBaseline = 'top';
+      ctx.font = '14px Arial, sans-serif';
+      ctx.fillStyle = '#ff9900';
+      ctx.fillRect(8, 4, 50, 18);
+      ctx.fillStyle = '#0066aa';
+      ctx.fillText('Trăng2026☾', 12, 12);
+      ctx.fillStyle = 'rgba(102, 204, 0, 0.7)';
+      ctx.fillText('Trăng2026☾', 14, 14);
+      const dataUri = cvs.toDataURL();
+      parts.push(`cvs:${dataUri.slice(dataUri.length - 40, dataUri.length - 8)}`);
+    }
+  } catch (_) { parts.push('cvs:none'); }
+
+  return hashFingerprint(parts.join('|'));
+}
+
+const deviceReady = getDeviceFingerprint().then(id => {
+  state.deviceId = id;
+  return id;
+});
 
 // Dữ liệu nội dung luôn được nạp lại từ Firebase.
 state.claim = null;
@@ -42,6 +124,7 @@ function save() {
     // Chỉ lưu định danh và tùy chọn phiên trên máy. Nội dung cộng đồng nằm trên Firebase.
     localStorage.setItem(KEY, JSON.stringify({
       visitorId: state.visitorId,
+      deviceId: state.deviceId,
       name: state.name,
       created: state.created,
       visits: state.visits,
@@ -79,15 +162,60 @@ const defaultBlessings = [
 /* Live Cloud Sync (Firebase Realtime Database) */
 function initLiveSync() {
   try {
-    claimReady = fetch(`${FIREBASE_DB_URL}/claims/${state.visitorId}.json`)
-      .then(res => res.ok ? res.json() : null)
-      .then(claim => {
-        if (claim && claim.content) {
-          state.claim = claim;
-          render();
+    claimReady = (async () => {
+      const devId = await deviceReady;
+
+      // 1. Đồng bộ người dùng thiết bị vật lý trên Firebase
+      try {
+        const devUserRes = await fetch(`${FIREBASE_DB_URL}/device_users/${devId}.json`);
+        if (devUserRes.ok) {
+          const linkedVisitorId = await devUserRes.json();
+          if (linkedVisitorId && typeof linkedVisitorId === 'string') {
+            state.visitorId = linkedVisitorId;
+            save();
+          } else if (state.visitorId) {
+            fetch(`${FIREBASE_DB_URL}/device_users/${devId}.json`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(state.visitorId)
+            }).catch(() => {});
+          }
         }
-      })
-      .catch(() => {});
+      } catch (_) {}
+
+      // 2. Khóa thiết bị: Kiểm tra xem thiết bị này đã từng bốc quà chưa (kể cả trên trình duyệt khác)
+      try {
+        const devClaimRes = await fetch(`${FIREBASE_DB_URL}/device_claims/${devId}.json`);
+        if (devClaimRes.ok) {
+          const devClaim = await devClaimRes.json();
+          if (devClaim && devClaim.content) {
+            state.claim = devClaim;
+            render();
+            return state.claim;
+          }
+        }
+      } catch (_) {}
+
+      // 3. Fallback theo visitorId nếu có
+      try {
+        const res = await fetch(`${FIREBASE_DB_URL}/claims/${state.visitorId}.json`);
+        if (res.ok) {
+          const claim = await res.json();
+          if (claim && claim.content) {
+            state.claim = claim;
+            render();
+            fetch(`${FIREBASE_DB_URL}/device_claims/${devId}.json`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ ...claim, deviceId: devId })
+            }).catch(() => {});
+            return state.claim;
+          }
+        }
+      } catch (_) {}
+
+      return state.claim;
+    })().catch(() => {});
 
     syncRemoteWishes();
 
@@ -678,11 +806,26 @@ async function openGift() {
   }
 
   await claimReady;
+  const devId = state.deviceId || (await deviceReady);
+
   // Khóa 1 lần duy nhất: Nếu đã mở quà rồi thì chỉ hiển thị lại, KHÔNG cho bốc lại!
   if (state.claim) {
     showWish(state.claim, true);
     return { content: state.claim.content };
   }
+
+  // Kiểm tra trực tiếp trên Firebase xem thiết bị vật lý này đã mở quà ở trình duyệt khác chưa
+  try {
+    const devCheck = await fetch(`${FIREBASE_DB_URL}/device_claims/${devId}.json`);
+    const devClaim = devCheck.ok ? await devCheck.json() : null;
+    if (devClaim && devClaim.content) {
+      state.claim = devClaim;
+      render();
+      toast('Thiết bị này đã nhận quà Trung Thu rồi! Đang mở lại món quà của bạn ☾');
+      showWish(state.claim, true);
+      return { content: state.claim.content };
+    }
+  } catch (_) {}
 
   if (opening) return { opening: true };
   opening = true;
@@ -716,9 +859,11 @@ async function openGift() {
       lanternType: picked.lanternType || 'ong-sao',
       sourceWishId: picked.id || '',
       visitorId: state.visitorId,
+      deviceId: devId,
       created: new Date().toISOString()
     };
     const claimPath = `${FIREBASE_DB_URL}/claims/${state.visitorId}.json`;
+    const devClaimPath = `${FIREBASE_DB_URL}/device_claims/${devId}.json`;
     const claimCheck = await fetch(claimPath, { headers: { 'X-Firebase-ETag': 'true' } });
     const existingClaim = claimCheck.ok ? await claimCheck.json() : null;
     if (existingClaim?.content) {
@@ -736,6 +881,21 @@ async function openGift() {
       } else {
         if (!claimResponse.ok) throw new Error('Chưa thể lưu món quà lên Firebase.');
         state.claim = claim;
+
+        // Lưu đồng thời khóa thiết bị vật lý lên Firebase
+        fetch(devClaimPath, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(claim)
+        }).catch(() => {});
+
+        // Liên kết deviceId -> visitorId
+        fetch(`${FIREBASE_DB_URL}/device_users/${devId}.json`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(state.visitorId)
+        }).catch(() => {});
+
         // Tăng lượt bốc của lời chúc nguồn nếu có
         if (picked && picked.id) {
           try {
@@ -805,6 +965,16 @@ async function sendWish(content, name, anonymous, isPublic, lanternType) {
   });
   if (!response.ok) throw new Error('Chưa thể lưu lời chúc lên Firebase. Vui lòng thử lại.');
   state.wishes = [w];
+
+  // Lưu liên kết device -> wish
+  const devId = state.deviceId || (await deviceReady);
+  if (devId) {
+    fetch(`${FIREBASE_DB_URL}/device_wishes/${devId}.json`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(wishId)
+    }).catch(() => {});
+  }
 
   // Cập nhật bộ nhớ đệm lời chúc cộng đồng
   const existIdx = communityWishes.findIndex(item => item.id === wishId);
@@ -1104,11 +1274,20 @@ function bindPageEvents() {
 }
 
 function updateActiveNav(page) {
+  const normalizedPage = (page === 'reunion') ? 'create-reunion' : (page === 'feast') ? 'create-feast' : page;
+  let activeItem = null;
   $$('nav a').forEach(a => {
     const href = a.getAttribute('href');
     const targetPage = href === 'index.html' ? 'home' : href.replace('.html', '');
-    a.classList.toggle('active', targetPage === page);
+    const isActive = targetPage === normalizedPage;
+    a.classList.toggle('active', isActive);
+    if (isActive) activeItem = a;
   });
+  if (activeItem && typeof activeItem.scrollIntoView === 'function') {
+    try {
+      activeItem.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
+    } catch (_) {}
+  }
 }
 
 /* PJAX Router: Continuous Audio & Seamless Page Transitions */
