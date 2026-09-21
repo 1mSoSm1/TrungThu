@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600&family=Charm:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=20260921k">
+<link rel="stylesheet" href="style.css?v=20260921l">
 </head>
 <body data-page="wishes">
 <div id="atmosphere" aria-hidden="true"></div>
@@ -116,13 +116,13 @@
 <dialog id="qr-dialog" class="wish-dialog">
   <button class="close" id="close-qr" aria-label="Đóng mã QR">×</button>
   <h2 class="hand">Gửi một mùa trăng</h2>
-  <img src="assets/qr.svg" alt="Mã QR dẫn đến website Dưới Ánh Trăng" width="220" height="220" style="background:white;padding:12px;border-radius:12px;max-width:100%;margin:15px auto;display:block">
+  <div id="site-qrcode" class="site-qrcode-wrap"></div>
   <p>Quét mã để cùng ghé thăm Dưới Ánh Trăng.</p>
-  <p class="demo-note">Bản xem thử trải nghiệm Trung Thu 2026.</p>
-  <a class="gold" href="assets/qr.svg" download="trung-thu-qr.svg">Tải mã QR ↓</a>
+  <p class="demo-note" id="site-qr-url" style="word-break:break-all;font-size:12px;opacity:0.85;margin-bottom:14px;"></p>
+  <a class="gold" id="download-site-qr" href="#" download="duoi-anh-trang-qr.png">Tải mã QR (PNG) ↓</a>
 </dialog>
 
 <div id="toast" role="status" aria-live="polite"></div>
-<script src="app.js?v=20260921k"></script>
+<script src="app.js?v=20260921l"></script>
 </body>
 </html>

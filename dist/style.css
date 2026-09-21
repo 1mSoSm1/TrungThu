@@ -3195,3 +3195,25 @@ dialog[open] {
   height: 22px;
   object-fit: contain;
 }
+
+.site-qrcode-wrap {
+  background: #ffffff;
+  padding: 14px;
+  border-radius: 16px;
+  width: 220px;
+  height: 220px;
+  margin: 16px auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  box-sizing: content-box;
+}
+
+.site-qrcode-wrap canvas,
+.site-qrcode-wrap img {
+  border-radius: 6px;
+  display: block !important;
+  max-width: 100% !important;
+  height: auto !important;
+}
