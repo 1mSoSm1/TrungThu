@@ -22,4 +22,16 @@ Tạo bảng visitors, wishes, wish_claims, reports; dùng Supabase Auth anonymo
 
 ## Tài nguyên
 
-Ba hình minh họa được tạo riêng cho dự án; Google Fonts: Charm và Be Vietnam Pro. Trình duyệt sử dụng phông dự phòng khi không kết nối được Google Fonts. Thiết lập prefers-reduced-motion giảm hiệu ứng chuyển động.
+Bốn hình minh họa được tạo riêng cho dự án; Google Fonts: Charm và Be Vietnam Pro. Trình duyệt sử dụng phông dự phòng khi không kết nối được Google Fonts. Thiết lập prefers-reduced-motion giảm hiệu ứng chuyển động.
+
+## Các trang riêng
+
+- index.html: trang chủ và lời chào
+- gift.html: mở quà và xem lại lời chúc
+- write.html: gửi lời chúc
+- sky.html: đèn trời tương tác
+- wishes.html: hòm thư
+- profile.html: thông tin và kết quả của bạn
+- about.html: giới thiệu, chia sẻ và mã QR
+
+Mỗi trang dùng chung style.css và app.js. page-template.html là bản mẫu cấu trúc trước khi gắn tên trang. Các file triển khai nằm hoàn toàn trong dist.
