@@ -2142,9 +2142,27 @@ function initCreateReunionPage() {
 
     const selectedStyle = $('input[name="box-style"]:checked')?.value || 'tre';
     const boxAssets = { tre: 'assets/box-bamboo.webp', 'son-mai': 'assets/box-lacquer.webp', 'bao-cap': 'assets/box-paper.webp' };
+    const boxNames = { tre: 'Hộp mây tre đan', 'son-mai': 'Hộp sơn mài hoa sen', 'bao-cap': 'Hộp giấy báo xưa' };
+
     const previewBox = $('#reunion-preview-box');
+    const previewBoxName = $('#reunion-preview-box-name');
+    const previewContainer = $('.reunion-preview');
     const previewCake = $('#reunion-preview-cake');
-    if (previewBox) previewBox.src = boxAssets[selectedStyle];
+
+    if (previewBox) {
+      const targetSrc = boxAssets[selectedStyle] || boxAssets.tre;
+      if (previewBox.src && !previewBox.src.endsWith(targetSrc)) {
+        previewBox.classList.add('box-swapping');
+        setTimeout(() => {
+          previewBox.src = targetSrc;
+          previewBox.classList.remove('box-swapping');
+        }, 120);
+      } else {
+        previewBox.src = targetSrc;
+      }
+    }
+    if (previewBoxName) previewBoxName.textContent = boxNames[selectedStyle] || 'Hộp mây tre đan';
+    if (previewContainer) previewContainer.dataset.style = selectedStyle;
     if (previewCake) previewCake.src = cap === 2 ? 'assets/mooncake-cut-2.webp' : 'assets/mooncake-cut-4.webp';
 
     // Mỗi vị trí được thể hiện bằng một chén gốm thật; bàn lớn vẫn xem gọn tối đa 12 chén.
@@ -2169,8 +2187,15 @@ function initCreateReunionPage() {
     }
   };
 
-  [title, message, $('#reunion-flavor'), $('#reunion-tea')].forEach(el => el.addEventListener('input', syncPreview));
-  $$('input[name="box-style"]').forEach(el => el.addEventListener('change', syncPreview));
+  [title, message, $('#reunion-flavor'), $('#reunion-tea')].forEach(el => el && el.addEventListener('input', syncPreview));
+  $$('input[name="box-style"]').forEach(el => {
+    el.addEventListener('change', syncPreview);
+    el.addEventListener('input', syncPreview);
+    el.addEventListener('click', syncPreview);
+  });
+  $$('.reunion-choice').forEach(el => {
+    el.addEventListener('click', () => setTimeout(syncPreview, 10));
+  });
   updateCustomVisibility();
   syncPreview();
 
