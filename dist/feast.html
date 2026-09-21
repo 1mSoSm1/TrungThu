@@ -95,6 +95,13 @@
           <p class="feast-progress-sub" id="feast-progress-sub">Mỗi người góp một món để cùng nhau mở hội phá cỗ!</p>
         </div>
 
+        <!-- Realtime Countdown Widget -->
+        <div class="feast-countdown-card" id="feast-countdown-card" hidden>
+          <span class="countdown-eyebrow">✦ THỜI GIAN ĐẾM NGƯỢC ĐẾN GIỜ PHÁ CỖ ✦</span>
+          <div class="countdown-clock" id="feast-countdown-clock">--:--:--</div>
+          <small id="feast-countdown-note">Đến giờ hẹn, mâm cỗ sẽ tự động mở hội tưng bừng!</small>
+        </div>
+
         <!-- Platter Container -->
         <div class="feast-platter-area" id="feast-platter-area">
           <div class="feast-platter" id="feast-platter">
@@ -189,7 +196,7 @@
   
   <div class="inspect-card">
     <div class="inspect-sender-row">
-      <span class="inspect-avatar" id="inspect-avatar">🐶</span>
+      <span class="inspect-avatar-icon" id="inspect-avatar"></span>
       <div>
         <b id="inspect-sender-name">Tuấn Anh</b>
         <small id="inspect-time">Vừa góp vào mâm cỗ</small>
@@ -222,7 +229,7 @@
   <h2 class="hand" id="lucky-heading">Chúc mừng bạn!</h2>
   
   <div class="lucky-result-wrap">
-    <div class="lucky-gift-icon" id="lucky-gift-icon">🎁</div>
+    <div class="lucky-gift-icon-wrap" id="lucky-gift-icon"></div>
     <p class="lucky-announcement" id="lucky-announcement">
       Bạn đã có duyên bốc trúng <b id="lucky-item-name">Chú chó bưởi</b> do <b id="lucky-sender-name">Tuấn Anh</b> chuẩn bị!
     </p>
@@ -242,6 +249,6 @@
 </dialog>
 
 <div id="toast" role="status" aria-live="polite"></div>
-<script src="app.js?v=20260921e"></script>
+<script src="app.js?v=20260921f"></script>
 </body>
 </html>

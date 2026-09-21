@@ -1636,6 +1636,45 @@ dialog[open] {
 @media(max-width:900px){.reunion-create-grid,.reunion-layout{grid-template-columns:1fr}.reunion-preview{position:relative;top:auto}.tea-scene{min-height:560px}}
 @media(max-width:600px){.reunion-create-section,.reunion-page{padding-left:14px;padding-right:14px}.reunion-choice-grid{grid-template-columns:1fr}.reunion-pair-grid{grid-template-columns:1fr}.capacity-grid{grid-template-columns:repeat(2,1fr)}.tea-scene{min-height:470px;padding:12px}.tea-table{margin-top:20px;width:100%}.reunion-seat{width:65px}.reunion-seat .tea-cup{width:34px;height:28px}.reunion-seat b{font-size:8px}.mooncake{border-width:7px}.share-link-row{flex-direction:column}.reunion-shelf-head{align-items:start;flex-direction:column}}
 
+/* Ảnh thủ công Việt Nam cho trải nghiệm Bánh Đoàn Viên */
+.reunion-choice{overflow:hidden;padding-top:8px}
+.reunion-choice .choice-art{display:block;width:100%;height:108px;margin:0 auto 4px;border-radius:10px;object-fit:contain;background:radial-gradient(circle,rgba(245,201,118,.09),transparent 68%);filter:drop-shadow(0 10px 12px rgba(0,0,0,.32));transition:transform .25s ease,filter .25s ease}
+.reunion-choice:has(input:checked) .choice-art{transform:translateY(-2px) scale(1.035);filter:drop-shadow(0 12px 17px rgba(229,174,81,.28))}
+.mini-tea-table{width:300px;height:300px;max-width:100%;margin:6px auto 16px;border-radius:0;background:none;filter:none;isolation:isolate}
+.preview-box-art{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:.18;transform:translate(18%,-18%) scale(.65);filter:blur(.3px) drop-shadow(0 12px 18px rgba(0,0,0,.5));z-index:-1}
+.preview-platter{position:absolute;width:64%;height:64%;left:50%;top:50%;transform:translate(-50%,-50%);object-fit:contain;filter:drop-shadow(0 18px 18px rgba(0,0,0,.45))}
+.preview-cake{position:absolute;width:43%;height:43%;left:50%;top:50%;transform:translate(-50%,-50%);object-fit:contain;filter:drop-shadow(0 10px 9px rgba(0,0,0,.35))}
+.preview-pot{position:absolute;width:24%;height:24%;right:2%;bottom:0;object-fit:contain;filter:drop-shadow(0 8px 8px rgba(0,0,0,.4));z-index:3}
+.preview-cups{position:absolute;inset:0;z-index:4}
+.preview-cups img{position:absolute;width:38px;height:38px;object-fit:contain;transform:translate(-50%,-50%);filter:drop-shadow(0 5px 5px rgba(0,0,0,.4))}
+
+.tea-table{background:none;filter:none;isolation:isolate}
+.tea-platter{position:absolute;width:68%;height:68%;left:50%;top:50%;transform:translate(-50%,-50%);object-fit:contain;filter:drop-shadow(0 24px 25px rgba(0,0,0,.48));z-index:0}
+.tea-table .mooncake{position:absolute;width:45%;height:45%;left:50%;top:50%;transform:translate(-50%,-50%);object-fit:contain;border:0;border-radius:0;background:none;box-shadow:none;filter:drop-shadow(0 14px 12px rgba(0,0,0,.42));z-index:1}
+.tea-table .mooncake:before,.tea-table .mooncake:after{content:none}
+.tea-pot{position:absolute;width:21%;height:21%;right:0;bottom:2%;object-fit:contain;filter:drop-shadow(0 12px 10px rgba(0,0,0,.45));z-index:4}
+.reunion-seats{z-index:3}
+.reunion-seat .tea-cup,.reunion-seat.mode-duo .tea-cup,.reunion-seat.cup-medium .tea-cup,.reunion-seat.cup-compact .tea-cup{display:block;width:54px;height:54px;margin:auto;object-fit:contain;border:0;border-radius:0;background:none;box-shadow:none;filter:drop-shadow(0 7px 6px rgba(0,0,0,.5));transition:transform .3s ease,filter .3s ease}
+.reunion-seat.mode-duo .tea-cup{width:66px;height:66px}
+.reunion-seat.cup-medium .tea-cup{width:43px;height:43px}
+.reunion-seat.cup-compact .tea-cup{width:35px;height:35px}
+.reunion-seat.empty .tea-cup{background:none;border:0;opacity:.56;filter:grayscale(.18) drop-shadow(0 5px 5px rgba(0,0,0,.4))}
+.reunion-seat.mine .tea-cup{border:0;box-shadow:none;transform:scale(1.08);filter:drop-shadow(0 0 13px rgba(255,205,103,.72))}
+.tea-scene.complete .mooncake{animation:reunionImageGlow 2.2s ease-in-out infinite alternate}
+@keyframes reunionImageGlow{to{filter:drop-shadow(0 0 24px rgba(255,196,88,.72));transform:translate(-50%,-50%) scale(1.025)}}
+.reunion-box-image{display:block;width:180px;height:138px;margin:-10px auto 0;object-fit:contain;filter:drop-shadow(0 12px 13px rgba(62,38,17,.24))}
+.invitation-note blockquote{margin-top:-2px}
+@media(max-width:600px){.reunion-choice .choice-art{height:145px}.mini-tea-table{width:270px;height:270px}.preview-cups img{width:32px;height:32px}.tea-pot{width:19%;height:19%;right:1%;bottom:6%}.reunion-seat .tea-cup,.reunion-seat.mode-duo .tea-cup{width:44px;height:44px}.reunion-seat.cup-medium .tea-cup{width:34px;height:34px}.reunion-seat.cup-compact .tea-cup{width:28px;height:28px}.tea-table .mooncake{border-width:0}}
+
+/* Hiện vật thật trên mâm cỗ, thay cho emoji minh họa */
+.feast-item-node .item-badge{width:76px;height:76px;border:0;border-radius:0;background:none;box-shadow:none;overflow:visible}
+.feast-item-node .item-badge img{display:block;width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 9px 8px rgba(0,0,0,.45))}
+.feast-item-node.sealed .item-badge img{filter:saturate(.82) brightness(.82) drop-shadow(0 8px 7px rgba(0,0,0,.45))}
+.feast-contributor-avatar img,#inspect-avatar img,#lucky-gift-icon img{display:block;width:100%;height:100%;object-fit:contain}
+#inspect-avatar{width:72px;height:72px;border:0;background:none;flex:none}
+#lucky-gift-icon{width:140px;height:140px;margin:0 auto;animation:giftBounce 1.2s ease-in-out infinite alternate}
+@media(max-width:600px){.feast-item-node .item-badge{width:54px;height:54px}#inspect-avatar{width:60px;height:60px}#lucky-gift-icon{width:115px;height:115px}}
+
 /* =========================================================
    FEAST & PHÁ CỖ (create-feast.html & feast.html)
    ========================================================= */
@@ -2836,4 +2875,287 @@ dialog[open] {
 
 .royal-envelope.theme-emerald {
   background: linear-gradient(145deg, #103227 0%, #061711 100%);
+}
+
+/* =========================================================
+   FEAST COUNTDOWN & TIMERS
+   ========================================================= */
+.feast-countdown-card {
+  max-width: 460px;
+  margin: 0 auto 26px;
+  padding: 18px 22px;
+  background: linear-gradient(135deg, rgba(22, 33, 56, 0.9), rgba(46, 18, 25, 0.92));
+  border: 1.5px solid rgba(212, 175, 55, 0.5);
+  border-radius: 18px;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55), inset 0 0 25px rgba(212, 175, 55, 0.15);
+  animation: countdownPulse 3.5s ease-in-out infinite alternate;
+}
+
+@keyframes countdownPulse {
+  from { box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55), inset 0 0 25px rgba(212, 175, 55, 0.1); }
+  to { box-shadow: 0 12px 38px rgba(212, 175, 55, 0.3), inset 0 0 35px rgba(212, 175, 55, 0.22); }
+}
+
+.countdown-eyebrow {
+  display: block;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--gold);
+  font-weight: 600;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+
+.countdown-clock {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: clamp(32px, 6vw, 44px);
+  font-weight: 700;
+  color: #fff4e0;
+  letter-spacing: 3px;
+  text-shadow: 0 0 18px rgba(240, 204, 138, 0.65);
+  line-height: 1.15;
+  margin: 4px 0 6px;
+}
+
+#feast-countdown-note {
+  display: block;
+  font-size: 12px;
+  color: #d8c3af;
+  line-height: 1.4;
+}
+
+/* =========================================================
+   WISHES FILTER TABS & ENGAGEMENT (Likes & Picks)
+   ========================================================= */
+.wish-filter-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 0 auto 30px;
+  flex-wrap: wrap;
+}
+
+.filter-tab {
+  background: rgba(22, 33, 56, 0.72);
+  color: #d8c3af;
+  border: 1.5px solid rgba(212, 175, 55, 0.28);
+  border-radius: 24px;
+  padding: 8px 22px;
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.22s ease;
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.filter-tab:hover {
+  background: rgba(36, 50, 80, 0.88);
+  border-color: var(--gold);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.filter-tab.active {
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.25), rgba(184, 40, 40, 0.35));
+  border-color: var(--gold);
+  color: var(--gold);
+  font-weight: 600;
+  box-shadow: 0 0 16px rgba(212, 175, 55, 0.32);
+}
+
+/* Enhanced Wish Card Structure */
+.wish-card {
+  position: relative;
+  flex-direction: column !important;
+  align-items: stretch !important;
+}
+
+.wish-card-main {
+  display: flex;
+  gap: 15px;
+  width: 100%;
+}
+
+.wish-card-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  gap: 8px;
+}
+
+.wish-honor-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 12px;
+  background: rgba(212, 175, 55, 0.15);
+  border: 1px solid rgba(212, 175, 55, 0.6);
+  color: #83521b;
+  white-space: nowrap;
+}
+
+.wish-honor-tag.top-rank {
+  background: linear-gradient(135deg, #d4a754, #af7a26);
+  color: #ffffff;
+  border: none;
+  box-shadow: 0 2px 8px rgba(175, 122, 38, 0.35);
+}
+
+.wish-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px dashed rgba(121, 102, 91, 0.22);
+}
+
+.wish-card-footer small {
+  font-size: 11px;
+  color: #79665b;
+}
+
+.wish-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.wish-stat-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: #6d4b35;
+  background: rgba(145, 98, 68, 0.12);
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-weight: 500;
+}
+
+.wish-stat-pill svg {
+  width: 12px;
+  height: 12px;
+  fill: #8d4f3b;
+}
+
+.wish-like-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 18px;
+  border: 1px solid rgba(145, 98, 68, 0.28);
+  background: rgba(255, 255, 255, 0.65);
+  color: #6e442c;
+  font-size: 11.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.wish-like-btn:hover {
+  border-color: #d64550;
+  color: #b82835;
+  background: #ffffff;
+  transform: translateY(-1px);
+}
+
+.wish-like-btn.liked {
+  border-color: #d64550;
+  background: rgba(214, 69, 80, 0.12);
+  color: #c02835;
+  font-weight: 600;
+}
+
+.wish-like-btn.liked svg {
+  fill: #d64550;
+  stroke: #d64550;
+}
+
+.wish-like-btn svg {
+  width: 13px;
+  height: 13px;
+  fill: none;
+  stroke: #8d4f3b;
+  stroke-width: 2;
+  transition: all 0.2s;
+}
+
+/* =========================================================
+   FEAST ITEM WEBP ASSETS & GRAPHICS
+   ========================================================= */
+.feast-item-badge-img {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
+  pointer-events: none;
+}
+
+.mini-item img {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  vertical-align: middle;
+}
+
+.inspect-avatar-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(255, 245, 225, 0.92);
+  border: 2px solid #ecd39d;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  flex-shrink: 0;
+}
+
+.inspect-avatar-img {
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
+}
+
+.lucky-gift-icon-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 245, 225, 0.95), rgba(243, 204, 137, 0.7));
+  border: 3px solid #f0cc8a;
+  box-shadow: 0 0 25px rgba(240, 204, 138, 0.5);
+  margin: 0 auto 12px;
+}
+
+.lucky-item-img {
+  width: 62px;
+  height: 62px;
+  object-fit: contain;
+  animation: floatGentle 3s ease-in-out infinite;
+}
+
+@keyframes floatGentle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+.wall-avatar-img {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
 }

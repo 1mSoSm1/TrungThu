@@ -90,6 +90,21 @@
           </div>
         </fieldset>
 
+        <fieldset class="reunion-fieldset" id="feast-deadline-fieldset">
+          <legend>Thời khắc mở hội Phá Cỗ (Hạn chót đếm ngược)</legend>
+          <div class="capacity-grid" style="grid-template-columns: repeat(3, 1fr);">
+            <label class="capacity-chip"><input type="radio" name="feast-deadline" value="manual" checked><span><b>Thủ công</b><small>Chủ xị tự bấm mở</small></span></label>
+            <label class="capacity-chip"><input type="radio" name="feast-deadline" value="1h"><span><b>1 giờ nữa</b><small>Phá cỗ tiệc nhanh</small></span></label>
+            <label class="capacity-chip"><input type="radio" name="feast-deadline" value="2h"><span><b>2 giờ nữa</b><small>Trong buổi liên hoan</small></span></label>
+            <label class="capacity-chip"><input type="radio" name="feast-deadline" value="tonight"><span><b>20:00 Đêm Rằm</b><small>Thời khắc hoàng đạo</small></span></label>
+            <label class="capacity-chip"><input type="radio" name="feast-deadline" value="24h"><span><b>24 giờ nữa</b><small>Cả ngày mai</small></span></label>
+            <label class="capacity-chip"><input type="radio" name="feast-deadline" value="custom"><span><b>Hẹn giờ khác</b><small>Tự chọn thời điểm</small></span></label>
+          </div>
+          <div class="custom-capacity-row" id="custom-deadline-wrap" style="margin-top:10px;" hidden>
+            <input type="datetime-local" id="custom-deadline-input" style="padding:10px 12px;font-size:13px;width:100%;">
+          </div>
+        </fieldset>
+
         <div class="form-group">
           <label for="feast-message">Lời mở hội của bạn gửi đến mọi người <small id="feast-message-count">0/280</small></label>
           <textarea id="feast-message" minlength="10" maxlength="280" required placeholder="Trung Thu đến rồi, mời cả nhà cùng vào góp cỗ để tối nay chúng mình cùng phá cỗ nhé…"></textarea>
@@ -127,11 +142,11 @@
           <div class="mini-feast-platter" id="feast-preview-platter">
             <div class="mini-feast-center"><span>☾</span></div>
             <div class="mini-feast-items" id="feast-preview-items">
-              <span class="mini-item item-cho-buoi" title="Chó bưởi">🐶</span>
-              <span class="mini-item item-den-ong-sao" title="Đèn ông sao">⭐</span>
-              <span class="mini-item item-nai-chuoi" title="Nải chuối">🍌</span>
-              <span class="mini-item item-com-sen" title="Cốm non">🌿</span>
-              <span class="mini-item item-banh-nuong" title="Bánh nướng">🥮</span>
+              <span class="mini-item item-cho-buoi" title="Chó bưởi"><img src="assets/item-cho-buoi.webp" alt="Chó bưởi"></span>
+              <span class="mini-item item-den-ong-sao" title="Đèn ông sao"><img src="assets/item-den-ong-sao.webp" alt="Đèn ông sao"></span>
+              <span class="mini-item item-nai-chuoi" title="Nải chuối"><img src="assets/item-nai-chuoi.webp" alt="Nải chuối"></span>
+              <span class="mini-item item-com-sen" title="Cốm non"><img src="assets/item-com-vong.webp" alt="Cốm non"></span>
+              <span class="mini-item item-banh-nuong" title="Bánh nướng"><img src="assets/mooncake-full.webp" alt="Bánh nướng"></span>
             </div>
           </div>
         </div>
@@ -162,6 +177,6 @@
 </dialog>
 
 <div id="toast" role="status" aria-live="polite"></div>
-<script src="app.js?v=20260921e"></script>
+<script src="app.js?v=20260921f"></script>
 </body>
 </html>

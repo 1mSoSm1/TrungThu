@@ -8,13 +8,14 @@ let state = {
   created: new Date().toISOString(),
   claim: null,
   wishes: [],
-  visits: 0
+  visits: 0,
+  likedWishes: {}
 };
 
 try {
   const saved = JSON.parse(localStorage.getItem(KEY));
   if (saved && typeof saved === 'object') {
-    state = { ...state, ...saved };
+    state = { ...state, ...saved, likedWishes: saved.likedWishes || {} };
   }
 } catch {}
 
@@ -43,7 +44,8 @@ function save() {
       visitorId: state.visitorId,
       name: state.name,
       created: state.created,
-      visits: state.visits
+      visits: state.visits,
+      likedWishes: state.likedWishes || {}
     }));
   } catch {
     if (!storageWarning) {
@@ -104,15 +106,28 @@ function initLiveSync() {
           if (parsed.path === '/' && parsed.data) {
             handleRemoteWishes(parsed.data);
           } else if (parsed.path && parsed.path.startsWith('/')) {
-            const key = parsed.path.replace('/', '');
+            const parts = parsed.path.replace(/^\//, '').split('/');
+            const key = parts[0];
+            const sub = parts[1];
             if (key) {
-              if (parsed.data) {
-                const idx = communityWishes.findIndex(w => w.id === key);
-                const item = { ...parsed.data, id: key };
-                if (idx >= 0) communityWishes[idx] = item;
-                else communityWishes.unshift(item);
-              } else {
-                communityWishes = communityWishes.filter(w => w.id !== key);
+              const idx = communityWishes.findIndex(w => w.id === key);
+              if (sub === 'likesCount' && idx >= 0) {
+                communityWishes[idx].likesCount = typeof parsed.data === 'number' ? parsed.data : 0;
+              } else if (sub === 'picksCount' && idx >= 0) {
+                communityWishes[idx].picksCount = typeof parsed.data === 'number' ? parsed.data : 0;
+              } else if (!sub) {
+                if (parsed.data) {
+                  const item = {
+                    ...parsed.data,
+                    id: key,
+                    likesCount: typeof parsed.data.likesCount === 'number' ? parsed.data.likesCount : 0,
+                    picksCount: typeof parsed.data.picksCount === 'number' ? parsed.data.picksCount : 0
+                  };
+                  if (idx >= 0) communityWishes[idx] = item;
+                  else communityWishes.unshift(item);
+                } else {
+                  communityWishes = communityWishes.filter(w => w.id !== key);
+                }
               }
               render();
             }
@@ -128,7 +143,12 @@ function initLiveSync() {
 function handleRemoteWishes(data) {
   communityWishes = Object.entries(data)
     .filter(([_, val]) => val && val.content)
-    .map(([id, val]) => ({ ...val, id }))
+    .map(([id, val]) => ({
+      ...val,
+      id,
+      likesCount: typeof val.likesCount === 'number' ? val.likesCount : 0,
+      picksCount: typeof val.picksCount === 'number' ? val.picksCount : 0
+    }))
     .sort((a, b) => new Date(b.created || 0) - new Date(a.created || 0));
 
   const myRemoteWish = communityWishes.find(w => w.id === state.visitorId);
@@ -137,6 +157,41 @@ function handleRemoteWishes(data) {
     save();
   }
   render();
+}
+
+async function toggleWishLike(wishId) {
+  if (!wishId) return;
+  if (!state.likedWishes) state.likedWishes = {};
+  const isLiked = Boolean(state.likedWishes[wishId]);
+
+  const wish = communityWishes.find(w => w.id === wishId);
+  const currentCount = (wish && typeof wish.likesCount === 'number') ? wish.likesCount : 0;
+  const newCount = isLiked ? Math.max(0, currentCount - 1) : currentCount + 1;
+
+  if (isLiked) {
+    delete state.likedWishes[wishId];
+  } else {
+    state.likedWishes[wishId] = true;
+  }
+  if (wish) wish.likesCount = newCount;
+
+  save();
+  render();
+
+  try {
+    await fetch(`${FIREBASE_DB_URL}/wishes/${encodeURIComponent(wishId)}/likesCount.json`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newCount)
+    });
+    await fetch(`${FIREBASE_DB_URL}/wish_likes/${encodeURIComponent(wishId)}/${state.visitorId}.json`, {
+      method: isLiked ? 'DELETE' : 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: isLiked ? undefined : JSON.stringify(true)
+    });
+  } catch (err) {
+    console.warn('Like sync failed:', err);
+  }
 }
 
 let toastTimer;
@@ -247,6 +302,7 @@ async function toggleMusic() {
 
 /* Page Rendering & State Synchronization */
 let expanded = false;
+let currentWishFilter = 'recent';
 
 function render() {
   // Common states
@@ -264,14 +320,9 @@ function render() {
     profileDate.textContent = new Date(state.created).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' });
   }
 
-  const profileWish = $('#profile-wish');
-  if (profileWish) {
-    profileWish.textContent = state.claim ? state.claim.content : 'Món quà vẫn đang chờ bạn.';
-  }
-
-  const profileSent = $('#profile-sent');
-  if (profileSent) {
-    profileSent.textContent = state.wishes.length
+  const profileWishText = $('#profile-wish-text');
+  if (profileWishText) {
+    profileWishText.textContent = state.wishes.length > 0
       ? state.wishes.map(w => '“' + w.content + '”' + (w.public ? '' : ' (Riêng tư)')).join('\n\n')
       : 'Chưa có lời chúc nào.';
   }
@@ -298,8 +349,28 @@ function render() {
   // Wishes list rendering (wishes.html)
   const wishList = $('#wish-list');
   if (wishList) {
-    // 100% Real wishes from Firebase community (or user's own)
-    const visible = communityWishes.filter(w => w.public && w.content);
+    // Filter tabs binding
+    const tabButtons = $$('#wish-filter-tabs .filter-tab');
+    tabButtons.forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.filter === currentWishFilter);
+      btn.onclick = () => {
+        if (currentWishFilter !== btn.dataset.filter) {
+          currentWishFilter = btn.dataset.filter;
+          render();
+        }
+      };
+    });
+
+    // Filter public wishes
+    let visible = communityWishes.filter(w => w.public && w.content);
+    if (currentWishFilter === 'top-liked') {
+      visible.sort((a, b) => (b.likesCount || 0) - (a.likesCount || 0) || (new Date(b.created || 0) - new Date(a.created || 0)));
+    } else if (currentWishFilter === 'top-picked') {
+      visible.sort((a, b) => (b.picksCount || 0) - (a.picksCount || 0) || (new Date(b.created || 0) - new Date(a.created || 0)));
+    } else {
+      visible.sort((a, b) => new Date(b.created || 0) - new Date(a.created || 0));
+    }
+
     wishList.replaceChildren();
 
     if (visible.length === 0) {
@@ -307,27 +378,93 @@ function render() {
       emptyNotice.className = 'empty-notice';
       emptyNotice.style.cssText = 'text-align:center;padding:45px 20px;grid-column:1/-1;color:#bca992;';
       emptyNotice.innerHTML = `
-        <p style="font-size:15px;margin-bottom:14px;">Chưa có lời chúc nào trong Hòm thư.</p>
-        <a href="write.html" class="gold" style="font-size:13px;padding:10px 20px;display:inline-block;">Hãy là người đầu tiên gửi lời chúc</a>
+        <p style="font-size:15px;margin-bottom:14px;">Chưa có lời chúc nào trong mục này.</p>
+        <a href="write.html" class="gold" style="font-size:13px;padding:10px 20px;display:inline-block;">Gửi lời chúc đầu tiên ngay</a>
       `;
       wishList.append(emptyNotice);
     } else {
-      visible.slice(0, expanded ? visible.length : 6).forEach(w => {
+      visible.slice(0, expanded ? visible.length : 6).forEach((w, rankIdx) => {
         const card = document.createElement('article');
         card.className = 'wish-card';
+
+        const main = document.createElement('div');
+        main.className = 'wish-card-main';
+
         const avatar = document.createElement('span');
         avatar.className = 'avatar';
         avatar.textContent = displayName(w).charAt(0);
-        const body = document.createElement('div'),
-          name = document.createElement('b'),
-          p = document.createElement('p'),
-          meta = document.createElement('small');
+
+        const body = document.createElement('div');
+        body.style.flex = '1';
+
+        const topRow = document.createElement('div');
+        topRow.className = 'wish-card-top-row';
+        const name = document.createElement('b');
         name.textContent = displayName(w);
+        topRow.appendChild(name);
+
+        // Honor badges for top ranked or notable wishes
+        if (currentWishFilter === 'top-liked' && rankIdx === 0 && (w.likesCount || 0) > 0) {
+          const badge = document.createElement('span');
+          badge.className = 'wish-honor-tag top-rank';
+          badge.textContent = '✦ Yêu thích nhất';
+          topRow.appendChild(badge);
+        } else if (currentWishFilter === 'top-picked' && rankIdx === 0 && (w.picksCount || 0) > 0) {
+          const badge = document.createElement('span');
+          badge.className = 'wish-honor-tag top-rank';
+          badge.textContent = '✦ Đón nhận nhiều nhất';
+          topRow.appendChild(badge);
+        } else if ((w.likesCount || 0) >= 3) {
+          const badge = document.createElement('span');
+          badge.className = 'wish-honor-tag';
+          badge.textContent = `✦ Ấm lòng (${w.likesCount})`;
+          topRow.appendChild(badge);
+        } else if ((w.picksCount || 0) >= 3) {
+          const badge = document.createElement('span');
+          badge.className = 'wish-honor-tag';
+          badge.textContent = `✦ Duyên lành (${w.picksCount})`;
+          topRow.appendChild(badge);
+        }
+
+        const p = document.createElement('p');
         p.textContent = w.content;
+
+        body.append(topRow, p);
+        main.append(avatar, body);
+
+        // Footer with timestamp & interactive like button
+        const footer = document.createElement('div');
+        footer.className = 'wish-card-footer';
         const isMe = w.id === state.visitorId;
+        const meta = document.createElement('small');
         meta.textContent = isMe ? 'Bạn gửi · ' + new Date(w.created).toLocaleString('vi-VN') : 'Gửi từ ' + displayName(w);
-        body.append(name, p, meta);
-        card.append(avatar, body);
+
+        const actions = document.createElement('div');
+        actions.className = 'wish-card-actions';
+
+        if ((w.picksCount || 0) > 0) {
+          const pickPill = document.createElement('span');
+          pickPill.className = 'wish-stat-pill';
+          pickPill.title = `${w.picksCount} người đã bốc trúng lời chúc này`;
+          pickPill.innerHTML = `<svg viewBox="0 0 24 24"><path d="M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6 0h-4V4h4v2z"/></svg> <span>${w.picksCount} bốc</span>`;
+          actions.appendChild(pickPill);
+        }
+
+        const isLiked = Boolean(state.likedWishes?.[w.id]);
+        const likeBtn = document.createElement('button');
+        likeBtn.type = 'button';
+        likeBtn.className = 'wish-like-btn' + (isLiked ? ' liked' : '');
+        likeBtn.title = isLiked ? 'Bỏ thích' : 'Yêu thích lời chúc này';
+        likeBtn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg> <span>${w.likesCount || 0}</span>`;
+        likeBtn.onclick = e => {
+          e.stopPropagation();
+          toggleWishLike(w.id);
+        };
+        actions.appendChild(likeBtn);
+
+        footer.append(meta, actions);
+        card.append(main, footer);
+        card.onclick = () => showWish(w, isMe);
         wishList.append(card);
       });
     }
@@ -527,6 +664,31 @@ function showWish(w, own) {
   const actions = $('#received-actions');
   if (actions) actions.hidden = !own;
 
+  // Dialog Like Button update
+  const dialogLikeBtn = $('#dialog-like-btn');
+  if (dialogLikeBtn) {
+    if (w.id) {
+      dialogLikeBtn.hidden = false;
+      const syncDialogLikeUI = () => {
+        const isLiked = Boolean(state.likedWishes?.[w.id]);
+        dialogLikeBtn.classList.toggle('liked', isLiked);
+        const countEl = $('#dialog-like-count');
+        const latestWish = communityWishes.find(item => item.id === w.id);
+        const count = latestWish?.likesCount ?? w.likesCount ?? 0;
+        if (countEl) countEl.textContent = count;
+        const labelEl = $('#dialog-like-label');
+        if (labelEl) labelEl.textContent = isLiked ? 'Đã yêu thích' : 'Thả tim';
+      };
+      syncDialogLikeUI();
+      dialogLikeBtn.onclick = async () => {
+        await toggleWishLike(w.id);
+        syncDialogLikeUI();
+      };
+    } else {
+      dialogLikeBtn.hidden = true;
+    }
+  }
+
   try {
     if (!dialog.open) dialog.showModal();
   } catch {
@@ -601,6 +763,18 @@ async function openGift() {
       } else {
         if (!claimResponse.ok) throw new Error('Chưa thể lưu món quà lên Firebase.');
         state.claim = claim;
+        // Tăng lượt bốc của lời chúc nguồn nếu có
+        if (picked && picked.id) {
+          try {
+            const newPicks = (picked.picksCount || 0) + 1;
+            picked.picksCount = newPicks;
+            fetch(`${FIREBASE_DB_URL}/wishes/${encodeURIComponent(picked.id)}/picksCount.json`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(newPicks)
+            }).catch(() => {});
+          } catch {}
+        }
       }
     }
   }
@@ -1814,27 +1988,37 @@ function initCreateReunionPage() {
     $('#reunion-preview-flavor').textContent = $('#reunion-flavor').value;
     $('#reunion-preview-tea').textContent = $('#reunion-tea').value;
 
-    // Cập nhật các chén trà nhỏ trong preview
-    const miniTable = document.querySelector('.mini-tea-table');
-    if (miniTable) {
-      miniTable.querySelectorAll('i').forEach(el => el.remove());
+    const selectedStyle = $('input[name="box-style"]:checked')?.value || 'tre';
+    const boxAssets = { tre: 'assets/box-bamboo.webp', 'son-mai': 'assets/box-lacquer.webp', 'bao-cap': 'assets/box-paper.webp' };
+    const previewBox = $('#reunion-preview-box');
+    const previewCake = $('#reunion-preview-cake');
+    if (previewBox) previewBox.src = boxAssets[selectedStyle];
+    if (previewCake) previewCake.src = cap === 2 ? 'assets/mooncake-cut-2.webp' : 'assets/mooncake-cut-4.webp';
+
+    // Mỗi vị trí được thể hiện bằng một chén gốm thật; bàn lớn vẫn xem gọn tối đa 12 chén.
+    const cupsLayer = $('#reunion-preview-cups');
+    if (cupsLayer) {
+      cupsLayer.replaceChildren();
       const previewCups = Math.min(cap, 12);
       for (let i = 0; i < previewCups; i++) {
-        const iEl = document.createElement('i');
+        const cup = document.createElement('img');
+        cup.src = i === 0 ? 'assets/cup-filled.webp' : 'assets/cup-empty.webp';
+        cup.alt = '';
         if (cap === 2) {
-          iEl.style.left = (i === 0 ? '24px' : '246px');
-          iEl.style.top = '135px';
+          cup.style.left = (i === 0 ? '12%' : '88%');
+          cup.style.top = '52%';
         } else {
           const rad = (-90 + i * (360 / previewCups)) * Math.PI / 180;
-          iEl.style.left = (135 + Math.cos(rad) * 105) + 'px';
-          iEl.style.top = (135 + Math.sin(rad) * 105) + 'px';
+          cup.style.left = (50 + Math.cos(rad) * 42) + '%';
+          cup.style.top = (50 + Math.sin(rad) * 42) + '%';
         }
-        miniTable.appendChild(iEl);
+        cupsLayer.appendChild(cup);
       }
     }
   };
 
   [title, message, $('#reunion-flavor'), $('#reunion-tea')].forEach(el => el.addEventListener('input', syncPreview));
+  $$('input[name="box-style"]').forEach(el => el.addEventListener('change', syncPreview));
   updateCustomVisibility();
   syncPreview();
 
@@ -1860,6 +2044,14 @@ function initCreateReunionPage() {
   $('#close-reunion-result').onclick = () => $('#reunion-result-dialog').close();
 }
 
+function makeReunionCup(seat) {
+  const cup = document.createElement('img');
+  cup.className = 'tea-cup';
+  cup.src = seat ? 'assets/cup-filled.webp' : 'assets/cup-empty.webp';
+  cup.alt = seat ? `Chén trà của ${seat.name}` : 'Chén trà đang chờ';
+  return cup;
+}
+
 function renderReunionBox(box) {
   if (!box || !$('#reunion-content')) return;
   lastReunionBox = box;
@@ -1873,15 +2065,9 @@ function renderReunionBox(box) {
   const capacity = Math.max(2, Number(box.capacity || 4)), count = seats.length, complete = count >= capacity;
   const scene = $('#tea-scene'); scene.classList.toggle('complete', complete); scene.dataset.style = box.style || 'tre';
   scene.dataset.capacityMode = capacity === 2 ? 'duo' : (capacity > 8 ? 'grand' : 'standard');
-
-  if (capacity === 2) {
-    $('#reunion-mooncake').style.setProperty('--segment', '180deg');
-  } else if (capacity <= 8) {
-    $('#reunion-mooncake').style.setProperty('--segment', (360 / capacity) + 'deg');
-  } else {
-    $('#reunion-mooncake').style.setProperty('--segment', '45deg');
-  }
-  $('#reunion-mooncake').style.setProperty('--filled', Math.min(360, (count / capacity * 360)) + 'deg');
+  $('#reunion-mooncake').src = capacity === 2 ? 'assets/mooncake-cut-2.webp' : 'assets/mooncake-cut-4.webp';
+  const boxAssets = { tre: 'assets/box-bamboo.webp', 'son-mai': 'assets/box-lacquer.webp', 'bao-cap': 'assets/box-paper.webp' };
+  $('#reunion-box-image').src = boxAssets[box.style] || boxAssets.tre;
   $('#reunion-progress-bar').style.width = Math.min(100, count / capacity * 100) + '%';
 
   if (capacity === 2) {
@@ -1908,9 +2094,7 @@ function renderReunionBox(box) {
       el.className = 'reunion-seat mode-duo ' + (seat ? 'occupied' : 'empty') + (seat?.visitorId === state.visitorId ? ' mine' : '');
       el.style.left = duoPositions[i].left + '%';
       el.style.top = duoPositions[i].top + '%';
-      const cup = document.createElement('span'), label = document.createElement('b');
-      cup.className = 'tea-cup';
-      cup.textContent = seat ? '♨' : '○';
+      const cup = makeReunionCup(seat), label = document.createElement('b');
       label.textContent = seat ? seat.name : (i === 0 ? (box.ownerName || 'Chủ bàn') : 'Chờ người thương…');
       el.append(cup, label);
       seatsEl.append(el);
@@ -1923,9 +2107,7 @@ function renderReunionBox(box) {
       el.className = 'reunion-seat ' + (seat ? 'occupied' : 'empty') + (seat?.visitorId === state.visitorId ? ' mine' : '');
       el.style.left = (50 + Math.cos(rad) * 44) + '%';
       el.style.top = (50 + Math.sin(rad) * 44) + '%';
-      const cup = document.createElement('span'), label = document.createElement('b');
-      cup.className = 'tea-cup';
-      cup.textContent = seat ? '♨' : '○';
+      const cup = makeReunionCup(seat), label = document.createElement('b');
       label.textContent = seat ? seat.name : `Phần ${i + 1}`;
       el.append(cup, label);
       seatsEl.append(el);
@@ -1950,9 +2132,7 @@ function renderReunionBox(box) {
       el.className = `reunion-seat mode-grand ${cupScale} ` + (seat ? 'occupied' : 'empty') + (seat?.visitorId === state.visitorId ? ' mine' : '');
       el.style.left = (50 + Math.cos(rad) * radiusPct) + '%';
       el.style.top = (50 + Math.sin(rad) * radiusPct) + '%';
-      const cup = document.createElement('span'), label = document.createElement('b');
-      cup.className = 'tea-cup';
-      cup.textContent = seat ? '♨' : '○';
+      const cup = makeReunionCup(seat), label = document.createElement('b');
       label.textContent = seat ? seat.name : `Phần ${i + 1}`;
       el.append(cup, label);
       seatsEl.append(el);
@@ -2028,16 +2208,26 @@ async function renderReunionShelf() {
    FEAST & PHÁ CỖ LOGIC (Góp cỗ trông trăng & Phá cỗ bí mật)
    ========================================================= */
 const FEAST_ITEM_MAP = {
-  'cho-buoi': { name: 'Chú chó bưởi lông xù', icon: '🐶', desc: 'Linh hồn mâm cỗ Trung Thu Việt' },
-  'den-ong-sao': { name: 'Đèn ông sao ngũ sắc', icon: '⭐', desc: 'Thắp sáng tuổi thơ rực rỡ' },
-  'nai-chuoi': { name: 'Nải chuối tiêu trứng cuốc', icon: '🍌', desc: 'Nâng đỡ mâm ngũ quả sum vầy' },
-  'com-sen': { name: 'Gói cốm non bọc lá sen', icon: '🌿', desc: 'Hương thơm thanh tao mùa thu' },
-  'banh-nuong': { name: 'Cặp bánh nướng ngũ phúc', icon: '🥮', desc: 'Vị đậm đà gắn kết tình thân' },
-  'banh-deo': { name: 'Cặp bánh dẻo hoa bưởi', icon: '🌕', desc: 'Trắng mịn thanh khiết an yên' },
-  'hong-na': { name: 'Đĩa quả hồng đỏ và na', icon: '🍎', desc: 'Sắc đỏ may mắn và ngọt ngào' },
-  'qua-thi': { name: 'Đĩa thị chín thơm lừng', icon: '🥭', desc: 'Hương thơm cổ tích dịu dàng' },
-  'den-keo-quan': { name: 'Đèn kéo quân cổ truyền', icon: '🏮', desc: 'Bóng hình kỷ niệm đêm trăng' }
+  'cho-buoi': { name: 'Chú chó bưởi lông xù', asset: 'assets/item-cho-buoi.webp', desc: 'Linh hồn mâm cỗ Trung Thu Việt' },
+  'den-ong-sao': { name: 'Đèn ông sao ngũ sắc', asset: 'assets/item-den-ong-sao.webp', desc: 'Thắp sáng tuổi thơ rực rỡ' },
+  'nai-chuoi': { name: 'Nải chuối tiêu trứng cuốc', asset: 'assets/item-nai-chuoi.webp', desc: 'Nâng đỡ mâm ngũ quả sum vầy' },
+  'com-sen': { name: 'Gói cốm non bọc lá sen', asset: 'assets/item-com-vong.webp', desc: 'Hương thơm thanh tao mùa thu' },
+  'banh-nuong': { name: 'Cặp bánh nướng ngũ phúc', asset: 'assets/mooncake-full.webp', desc: 'Vị đậm đà gắn kết tình thân' },
+  'banh-deo': { name: 'Cặp bánh dẻo hoa bưởi', asset: 'assets/mooncake-cut-4.webp', desc: 'Trắng mịn thanh khiết an yên' },
+  'hong-na': { name: 'Đĩa quả hồng đỏ và na', asset: 'assets/item-hong-na.webp', desc: 'Sắc đỏ may mắn và ngọt ngào' },
+  'qua-thi': { name: 'Đĩa thị chín thơm lừng', asset: 'assets/item-hong-na.webp', desc: 'Hương thơm cổ tích dịu dàng' },
+  'den-keo-quan': { name: 'Đèn kéo quân cổ truyền', asset: 'assets/lantern-keo-quan.webp', desc: 'Bóng hình kỷ niệm đêm trăng' }
 };
+
+function renderFeastArt(element, meta) {
+  if (!element || !meta) return;
+  element.replaceChildren();
+  const image = document.createElement('img');
+  image.src = meta.asset || 'assets/item-cho-buoi.webp';
+  image.alt = meta.name;
+  image.className = 'feast-item-badge-img';
+  element.appendChild(image);
+}
 
 let feastStream = null;
 let currentFeastBox = null;
@@ -2057,6 +2247,29 @@ async function createFeastBox(data) {
   const now = new Date().toISOString();
   const id = 'f_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 6);
   const target = data.target === 'open' ? 'open' : (parseInt(data.target, 10) || 25);
+
+  let deadlineIso = null;
+  const deadlineVal = data.deadline;
+  if (deadlineVal === '1h') {
+    deadlineIso = new Date(Date.now() + 3600 * 1000).toISOString();
+  } else if (deadlineVal === '2h') {
+    deadlineIso = new Date(Date.now() + 7200 * 1000).toISOString();
+  } else if (deadlineVal === 'tonight') {
+    const d = new Date();
+    d.setHours(20, 0, 0, 0);
+    if (d.getTime() <= Date.now()) {
+      d.setDate(d.getDate() + 1);
+    }
+    deadlineIso = d.toISOString();
+  } else if (deadlineVal === '24h') {
+    deadlineIso = new Date(Date.now() + 86400 * 1000).toISOString();
+  } else if (deadlineVal === 'custom' && data.customDeadline) {
+    const parsed = new Date(data.customDeadline);
+    if (!isNaN(parsed.getTime())) {
+      deadlineIso = parsed.toISOString();
+    }
+  }
+
   const box = {
     id,
     title: safeText(data.title, 60),
@@ -2064,6 +2277,7 @@ async function createFeastBox(data) {
     ownerId: state.visitorId,
     style: data.style || 'dong',
     targetCount: target,
+    deadline: deadlineIso,
     message: safeText(data.message, 280),
     status: 'open',
     created: now,
@@ -2228,6 +2442,13 @@ function initCreateFeastPage() {
 
   [title, message, ownerWish].forEach(el => el && el.addEventListener('input', syncPreview));
   document.querySelectorAll('input[name="feast-target"], input[name="feast-style"]').forEach(el => el.addEventListener('change', syncPreview));
+
+  const deadlineRadios = document.querySelectorAll('input[name="feast-deadline"]');
+  const customDeadlineWrap = $('#custom-deadline-wrap');
+  deadlineRadios.forEach(el => el.addEventListener('change', () => {
+    if (customDeadlineWrap) customDeadlineWrap.hidden = el.value !== 'custom';
+  }));
+
   syncPreview();
 
   form.onsubmit = async e => {
@@ -2241,6 +2462,8 @@ function initCreateFeastPage() {
         message: message.value,
         style: $('input[name="feast-style"]:checked')?.value,
         target: $('input[name="feast-target"]:checked')?.value,
+        deadline: $('input[name="feast-deadline"]:checked')?.value || 'manual',
+        customDeadline: $('#custom-deadline-input')?.value || null,
         ownerItem: $('#feast-owner-item')?.value,
         ownerWish: ownerWish.value
       });
@@ -2263,10 +2486,72 @@ function initCreateFeastPage() {
   $('#close-feast-result').onclick = () => $('#feast-result-dialog').close();
 }
 
+let feastCountdownInterval = null;
+
+function updateFeastCountdown(box) {
+  const card = $('#feast-countdown-card');
+  const clock = $('#feast-countdown-clock');
+  const note = $('#feast-countdown-note');
+  if (!card || !clock) return;
+
+  if (!box.deadline || box.status === 'celebrating') {
+    card.hidden = true;
+    if (feastCountdownInterval) {
+      clearInterval(feastCountdownInterval);
+      feastCountdownInterval = null;
+    }
+    return;
+  }
+
+  card.hidden = false;
+
+  const tick = async () => {
+    const targetTime = new Date(box.deadline).getTime();
+    const now = Date.now();
+    const diff = targetTime - now;
+
+    if (diff <= 0) {
+      clock.textContent = '00:00:00';
+      if (note) note.textContent = '✦ ĐÃ ĐẾN GIỜ HOÀNG ĐẠO PHÁ CỖ! ✦';
+      if (feastCountdownInterval) {
+        clearInterval(feastCountdownInterval);
+        feastCountdownInterval = null;
+      }
+      if (box.status === 'open') {
+        try {
+          const updated = await triggerFeastCelebration(box.id);
+          if (updated) renderFeastPage(updated);
+        } catch {}
+      }
+      return;
+    }
+
+    const totalSeconds = Math.floor(diff / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const mins = Math.floor((totalSeconds % 3600) / 60);
+    const secs = totalSeconds % 60;
+    const pad = n => String(n).padStart(2, '0');
+
+    if (hours >= 24) {
+      const days = Math.floor(hours / 24);
+      const remHours = hours % 24;
+      clock.textContent = `${days} ngày ${pad(remHours)}:${pad(mins)}:${pad(secs)}`;
+    } else {
+      clock.textContent = `${pad(hours)}:${pad(mins)}:${pad(secs)}`;
+    }
+  };
+
+  tick();
+  if (feastCountdownInterval) clearInterval(feastCountdownInterval);
+  feastCountdownInterval = setInterval(tick, 1000);
+}
+
 function renderFeastPage(box) {
   if (!box || !$('#feast-content')) return;
   currentFeastBox = box;
   $('#feast-loading').hidden = true; $('#feast-error').hidden = true; $('#feast-content').hidden = false;
+
+  updateFeastCountdown(box);
 
   const items = Object.values(box.items || {}).sort((a, b) => String(a.joinedAt).localeCompare(String(b.joinedAt)));
   const count = items.length;
@@ -2368,7 +2653,7 @@ function renderFeastPage(box) {
       const meta = FEAST_ITEM_MAP[item.itemType] || FEAST_ITEM_MAP['cho-buoi'];
       const badge = document.createElement('span');
       badge.className = 'item-badge';
-      badge.textContent = meta.icon;
+      renderFeastArt(badge, meta);
       badge.title = `${item.senderName}: ${meta.name}`;
 
       const tag = document.createElement('span');
@@ -2392,7 +2677,7 @@ function openItemInspect(item, isCelebrating, myPick) {
   const meta = FEAST_ITEM_MAP[item.itemType] || FEAST_ITEM_MAP['cho-buoi'];
 
   $('#inspect-item-title').textContent = meta.name;
-  $('#inspect-avatar').textContent = meta.icon;
+  renderFeastArt($('#inspect-avatar'), meta);
   $('#inspect-sender-name').textContent = item.senderName + (item.isOwner ? ' · Chủ xị mâm cỗ' : '');
   $('#inspect-time').textContent = `Góp vào: ${new Date(item.joinedAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}`;
 
@@ -2454,7 +2739,7 @@ function renderFeastWall(items, myPick, isCelebrating) {
 
     const avatar = document.createElement('span');
     avatar.className = 'feast-contributor-avatar';
-    avatar.textContent = meta.icon;
+    renderFeastArt(avatar, meta);
 
     const metaBox = document.createElement('div');
     metaBox.className = 'feast-contributor-meta';
@@ -2578,7 +2863,7 @@ async function initFeastPage() {
         const item = drawResult.item;
         const meta = FEAST_ITEM_MAP[item.itemType] || FEAST_ITEM_MAP['cho-buoi'];
 
-        $('#lucky-gift-icon').textContent = meta.icon;
+        renderFeastArt($('#lucky-gift-icon'), meta);
         $('#lucky-item-name').textContent = meta.name;
         $('#lucky-sender-name').textContent = item.senderName;
         $('#lucky-secret-wish').textContent = item.secretWish;
@@ -2641,7 +2926,8 @@ async function renderFeastShelf() {
     card.className = 'reunion-shelf-card';
     card.href = `feast.html?id=${box.id}`;
     const icon = document.createElement('span'), body = document.createElement('div'), title = document.createElement('b'), meta = document.createElement('small'), arrow = document.createElement('em');
-    icon.textContent = '🏮';
+    icon.className = 'shelf-card-icon';
+    icon.innerHTML = `<img src="assets/lantern-keo-quan.webp" alt="" style="width:20px;height:20px;object-fit:contain;vertical-align:middle;">`;
     title.textContent = box.title;
     meta.textContent = `${item.role === 'owner' ? 'Mâm cỗ bạn tạo' : 'Mâm cỗ bạn góp'} · ${count} món · ${box.status === 'celebrating' ? 'Đang mở hội' : 'Đang góp'}`;
     arrow.textContent = '→';

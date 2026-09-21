@@ -24,6 +24,8 @@
     <a href="index.html">Trang chủ</a>
     <a href="wishes.html" class="active">Lời chúc</a>
     <a href="sky.html">Bầu trời</a>
+    <a href="create-reunion.html">Bánh đoàn viên</a>
+    <a href="create-feast.html">Góp cỗ</a>
     <a href="profile.html">Trang của bạn</a>
     <a href="about.html">Về đêm trăng</a>
   </nav>
@@ -41,6 +43,13 @@
       <span class="eyebrow">HÒM THƯ DƯỚI ÁNH TRĂNG</span>
       <h2 class="hand">Những lời chúc gần đây</h2>
       <p>Những điều ấm áp và lời nhắn gửi chân thành được lưu giữ lại nơi đây.</p>
+    </div>
+
+    <!-- Filter Tabs -->
+    <div class="wish-filter-tabs" id="wish-filter-tabs">
+      <button class="filter-tab active" data-filter="recent">Mới nhất</button>
+      <button class="filter-tab" data-filter="top-liked">Được yêu thích nhất</button>
+      <button class="filter-tab" data-filter="top-picked">Được bốc nhiều nhất</button>
     </div>
 
     <div class="wish-list" id="wish-list"></div>
@@ -81,6 +90,13 @@
     <blockquote id="received-content"></blockquote>
     <p id="received-sender"></p>
   </div>
+  <div class="wish-dialog-like-bar" style="display:flex;justify-content:center;margin:12px 0 6px;">
+    <button type="button" class="wish-like-btn" id="dialog-like-btn">
+      <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+      <span id="dialog-like-label">Thả tim</span>
+      <span id="dialog-like-count" style="margin-left:2px;font-weight:600;">0</span>
+    </button>
+  </div>
   <div class="dialog-actions" id="received-actions">
     <button class="outline" id="save-image">
       <svg class="btn-icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -107,6 +123,6 @@
 </dialog>
 
 <div id="toast" role="status" aria-live="polite"></div>
-<script src="app.js"></script>
+<script src="app.js?v=20260921f"></script>
 </body>
 </html>

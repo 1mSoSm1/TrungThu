@@ -19,13 +19,18 @@
       <div class="reunion-layout">
         <div class="tea-scene" id="tea-scene">
           <div class="table-moon" aria-hidden="true"></div>
-          <div class="tea-table"><div class="mooncake" id="reunion-mooncake"><span>Đoàn<br>Viên</span></div><div id="reunion-seats" class="reunion-seats"></div></div>
+          <div class="tea-table">
+            <img class="tea-platter" src="assets/tea-table-platter.webp" alt="Đĩa gốm Bát Tràng men lam">
+            <img class="mooncake" id="reunion-mooncake" src="assets/mooncake-cut-4.webp" alt="Bánh Trung Thu được chia phần">
+            <img class="tea-pot" src="assets/teapot.webp" alt="Ấm trà men lam">
+            <div id="reunion-seats" class="reunion-seats"></div>
+          </div>
           <div class="reunion-progress"><div><span id="reunion-progress-bar"></span></div><p id="reunion-progress-text"></p></div>
           <p class="reunion-complete-message" id="reunion-complete-message" hidden>Trăng đã tròn, bàn trà đã đủ — chúng mình đang ở bên nhau.</p>
         </div>
 
         <aside class="reunion-side">
-          <div class="invitation-note"><span>☾</span><blockquote id="reunion-invitation"></blockquote><small id="reunion-menu"></small></div>
+          <div class="invitation-note"><img id="reunion-box-image" class="reunion-box-image" src="assets/box-bamboo.webp" alt="Hộp Bánh Đoàn Viên"><blockquote id="reunion-invitation"></blockquote><small id="reunion-menu"></small></div>
           <form id="reunion-join-form" class="reunion-join-form">
             <span class="eyebrow">NHẬN MỘT PHẦN BÁNH</span><h2 class="hand" id="reunion-join-title">Ngồi vào bàn trà</h2>
             <label for="reunion-guest-name">Tên của bạn</label><input id="reunion-guest-name" maxlength="40" required placeholder="Bạn muốn mọi người gọi mình là gì?">

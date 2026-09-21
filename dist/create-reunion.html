@@ -38,9 +38,9 @@
         <fieldset class="reunion-fieldset">
           <legend>Chọn vỏ hộp</legend>
           <div class="reunion-choice-grid">
-            <label class="reunion-choice"><input type="radio" name="box-style" value="tre" checked><span class="choice-art box-bamboo">▧</span><b>Mây tre đan</b><small>Mộc mạc, gần gũi</small></label>
-            <label class="reunion-choice"><input type="radio" name="box-style" value="son-mai"><span class="choice-art box-lacquer">✦</span><b>Sơn mài hoa sen</b><small>Trang trọng, ấm áp</small></label>
-            <label class="reunion-choice"><input type="radio" name="box-style" value="bao-cap"><span class="choice-art box-paper">月</span><b>Giấy báo xưa</b><small>Hoài niệm mùa trăng</small></label>
+            <label class="reunion-choice"><input type="radio" name="box-style" value="tre" checked><img class="choice-art" src="assets/box-bamboo.webp" alt="Hộp mây tre đan"><b>Mây tre đan</b><small>Mộc mạc, gần gũi</small></label>
+            <label class="reunion-choice"><input type="radio" name="box-style" value="son-mai"><img class="choice-art" src="assets/box-lacquer.webp" alt="Hộp sơn mài hoa sen"><b>Sơn mài hoa sen</b><small>Trang trọng, ấm áp</small></label>
+            <label class="reunion-choice"><input type="radio" name="box-style" value="bao-cap"><img class="choice-art" src="assets/box-paper.webp" alt="Hộp giấy báo xưa"><b>Giấy báo xưa</b><small>Hoài niệm mùa trăng</small></label>
           </div>
         </fieldset>
 
@@ -78,7 +78,13 @@
 
       <aside class="reunion-preview" aria-label="Xem trước bàn trà">
         <span class="eyebrow">XEM TRƯỚC</span><h2 class="hand" id="reunion-preview-title">Nhà mình dưới trăng</h2>
-        <div class="mini-tea-table"><div class="mini-mooncake"><span>福</span></div><i></i><i></i><i></i><i></i></div>
+        <div class="mini-tea-table">
+          <img class="preview-box-art" id="reunion-preview-box" src="assets/box-bamboo.webp" alt="Hộp bánh đã chọn">
+          <img class="preview-platter" src="assets/tea-table-platter.webp" alt="Đĩa gốm Bát Tràng">
+          <img class="preview-cake" id="reunion-preview-cake" src="assets/mooncake-cut-4.webp" alt="Bánh Trung Thu Đoàn Viên">
+          <img class="preview-pot" src="assets/teapot.webp" alt="Ấm trà men lam">
+          <div class="preview-cups" id="reunion-preview-cups" aria-label="Những chén trà quanh mâm"></div>
+        </div>
         <p id="reunion-preview-message">Một chiếc bánh tròn đang chờ những người thương cùng trở về.</p>
         <div class="preview-detail"><span id="reunion-preview-flavor">Thập cẩm xá xíu lá chanh</span><span>•</span><span id="reunion-preview-tea">Trà sen Tây Hồ</span></div>
       </aside>
