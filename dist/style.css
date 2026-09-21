@@ -3198,7 +3198,7 @@ dialog[open] {
 
 .site-qrcode-wrap {
   background: #ffffff;
-  padding: 14px;
+  padding: 16px;
   border-radius: 16px;
   width: 220px;
   height: 220px;
@@ -3213,7 +3213,6 @@ dialog[open] {
 .site-qrcode-wrap canvas,
 .site-qrcode-wrap img {
   border-radius: 6px;
-  display: block !important;
-  max-width: 100% !important;
-  height: auto !important;
+  max-width: 100%;
+  height: auto;
 }

@@ -873,6 +873,10 @@ function ensureWishDialog() {
 }
 
 function getSiteShareUrl() {
+  const PRODUCTION_SITE_URL = 'https://1msosm1.github.io/TrungThu/';
+  if (location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1' || !location.hostname) {
+    return PRODUCTION_SITE_URL;
+  }
   const url = new URL(location.href);
   let path = url.pathname;
   if (path.endsWith('.html')) {
@@ -937,13 +941,19 @@ function renderSiteQrCode() {
   setTimeout(() => {
     const canvas = qrContainer.querySelector('canvas');
     const img = qrContainer.querySelector('img');
-    const downloadBtns = $('#download-site-qr, #qr-dialog a.gold');
+    const downloadBtns = $$('#download-site-qr, #qr-dialog a.gold');
     downloadBtns.forEach(btn => {
+      let dataUrl = '';
       if (canvas) {
-        btn.href = canvas.toDataURL('image/png');
-        btn.download = 'duoi-anh-trang-qr.png';
-      } else if (img && img.src) {
-        btn.href = img.src;
+        try {
+          dataUrl = canvas.toDataURL('image/png');
+        } catch (_) {}
+      }
+      if (!dataUrl && img && img.src && !img.src.startsWith('blob:')) {
+        dataUrl = img.src;
+      }
+      if (dataUrl) {
+        btn.href = dataUrl;
         btn.download = 'duoi-anh-trang-qr.png';
       }
     });
