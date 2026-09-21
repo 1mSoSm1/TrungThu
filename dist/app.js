@@ -2263,11 +2263,6 @@ async function createFeastBox(data) {
     deadlineIso = d.toISOString();
   } else if (deadlineVal === '24h') {
     deadlineIso = new Date(Date.now() + 86400 * 1000).toISOString();
-  } else if (deadlineVal === 'custom' && data.customDeadline) {
-    const parsed = new Date(data.customDeadline);
-    if (!isNaN(parsed.getTime())) {
-      deadlineIso = parsed.toISOString();
-    }
   }
 
   const box = {
@@ -2443,12 +2438,6 @@ function initCreateFeastPage() {
   [title, message, ownerWish].forEach(el => el && el.addEventListener('input', syncPreview));
   document.querySelectorAll('input[name="feast-target"], input[name="feast-style"]').forEach(el => el.addEventListener('change', syncPreview));
 
-  const deadlineRadios = document.querySelectorAll('input[name="feast-deadline"]');
-  const customDeadlineWrap = $('#custom-deadline-wrap');
-  deadlineRadios.forEach(el => el.addEventListener('change', () => {
-    if (customDeadlineWrap) customDeadlineWrap.hidden = el.value !== 'custom';
-  }));
-
   syncPreview();
 
   form.onsubmit = async e => {
@@ -2463,7 +2452,6 @@ function initCreateFeastPage() {
         style: $('input[name="feast-style"]:checked')?.value,
         target: $('input[name="feast-target"]:checked')?.value,
         deadline: $('input[name="feast-deadline"]:checked')?.value || 'manual',
-        customDeadline: $('#custom-deadline-input')?.value || null,
         ownerItem: $('#feast-owner-item')?.value,
         ownerWish: ownerWish.value
       });
