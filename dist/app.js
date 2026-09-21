@@ -138,7 +138,17 @@ function save() {
   }
 }
 
+const COMMUNITY_WISHES_KEY = 'moonwish-community-cache';
 let communityWishes = [];
+let remoteWishesLoaded = false;
+try {
+  const cachedWishes = JSON.parse(localStorage.getItem(COMMUNITY_WISHES_KEY));
+  if (Array.isArray(cachedWishes) && cachedWishes.length > 0) {
+    communityWishes = cachedWishes;
+    remoteWishesLoaded = true;
+  }
+} catch {}
+
 let claimReady = Promise.resolve();
 
 const lanternTypes = ['ong-sao', 'ca-chep', 'keo-quan', 'tho-ngoc', 'hoi-an'];
@@ -242,6 +252,7 @@ async function syncRemoteWishes() {
 }
 
 function handleRemoteWishes(data) {
+  remoteWishesLoaded = true;
   communityWishes = Object.entries(data)
     .filter(([_, val]) => val && val.content)
     .map(([id, val]) => ({
@@ -251,6 +262,10 @@ function handleRemoteWishes(data) {
       picksCount: typeof val.picksCount === 'number' ? val.picksCount : 0
     }))
     .sort((a, b) => new Date(b.created || 0) - new Date(a.created || 0));
+
+  try {
+    localStorage.setItem(COMMUNITY_WISHES_KEY, JSON.stringify(communityWishes.slice(0, 60)));
+  } catch {}
 
   const myRemoteWish = communityWishes.find(w => w.id === state.visitorId);
   if (myRemoteWish) {
@@ -478,10 +493,16 @@ function render() {
       const emptyNotice = document.createElement('div');
       emptyNotice.className = 'empty-notice';
       emptyNotice.style.cssText = 'text-align:center;padding:45px 20px;grid-column:1/-1;color:#bca992;';
-      emptyNotice.innerHTML = `
-        <p style="font-size:15px;margin-bottom:14px;">Chưa có lời chúc nào trong mục này.</p>
-        <a href="write.html" class="gold" style="font-size:13px;padding:10px 20px;display:inline-block;">Gửi lời chúc đầu tiên ngay</a>
-      `;
+      if (!remoteWishesLoaded) {
+        emptyNotice.innerHTML = `
+          <p style="font-size:16px;margin-bottom:14px;color:var(--gold);font-family:'Charm',cursive;font-size:22px;">☾ Đang thắp sáng những lời chúc dưới ánh trăng…</p>
+        `;
+      } else {
+        emptyNotice.innerHTML = `
+          <p style="font-size:15px;margin-bottom:14px;">Chưa có lời chúc nào trong mục này.</p>
+          <a href="write.html" class="gold" style="font-size:13px;padding:10px 20px;display:inline-block;">Gửi lời chúc đầu tiên ngay</a>
+        `;
+      }
       wishList.append(emptyNotice);
     } else {
       visible.slice(0, expanded ? visible.length : 6).forEach((w, rankIdx) => {
@@ -632,10 +653,16 @@ function render() {
       const emptySky = document.createElement('div');
       emptySky.className = 'sky-empty';
       emptySky.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;color:#eed9be;z-index:15;padding:20px;';
-      emptySky.innerHTML = `
-        <p style="font-size:16px;margin-bottom:12px;font-family:'Charm',cursive;font-size:24px;color:var(--gold);">Bầu trời đêm rằm đang đợi ngọn đèn đầu tiên…</p>
-        <a href="write.html" class="gold" style="font-size:13px;padding:10px 22px;display:inline-block;">Thả ngọn đèn đầu tiên lên trời ✧</a>
-      `;
+      if (!remoteWishesLoaded) {
+        emptySky.innerHTML = `
+          <p style="margin-bottom:12px;font-family:'Charm',cursive;font-size:26px;color:var(--gold);">☾ Đang thắp sáng những ngọn đèn dưới ánh trăng…</p>
+        `;
+      } else {
+        emptySky.innerHTML = `
+          <p style="font-size:16px;margin-bottom:12px;font-family:'Charm',cursive;font-size:24px;color:var(--gold);">Bầu trời đêm rằm đang đợi ngọn đèn đầu tiên…</p>
+          <a href="write.html" class="gold" style="font-size:13px;padding:10px 22px;display:inline-block;">Thả ngọn đèn đầu tiên lên trời ✧</a>
+        `;
+      }
       skyContainer.append(emptySky);
     } else {
       const targetCount = Math.min(pool.length, matchMedia('(max-width: 600px)').matches ? 8 : 14);
@@ -1296,7 +1323,15 @@ async function navigateTo(url, replaceState = false) {
 
   // If internal anchor on same page
   if (targetUrl.pathname === location.pathname) {
-    if (targetUrl.search) handleQueryParams(targetUrl.searchParams);
+    if (targetUrl.search !== location.search) {
+      if (replaceState) {
+        history.replaceState({ page: document.body.dataset.page || 'home' }, '', targetUrl.href);
+      } else {
+        history.pushState({ page: document.body.dataset.page || 'home' }, '', targetUrl.href);
+      }
+      initPage();
+      handleQueryParams(targetUrl.searchParams);
+    }
     return;
   }
 
@@ -1339,6 +1374,9 @@ async function navigateTo(url, replaceState = false) {
 
     window.scrollTo({ top: 0, behavior: 'instant' });
     initPage();
+    if (newPage === 'sky' || newPage === 'wishes') {
+      syncRemoteWishes();
+    }
     handleQueryParams(targetUrl.searchParams);
   } catch (err) {
     // Fallback to normal navigation if fetch is unsupported or CORS-blocked
@@ -1347,12 +1385,20 @@ async function navigateTo(url, replaceState = false) {
 }
 
 function handleQueryParams(params) {
-  if (document.body.dataset.page === 'gift') {
+  const page = document.body.dataset.page;
+  const id = params.get('id');
+  if (page === 'gift') {
     if (params.get('open') === 'true' || params.get('open') === '1') {
       setTimeout(() => {
         openGift().catch(err => toast(err.message || 'Chưa thể mở quà từ Firebase.'));
       }, 350);
     }
+  } else if (page === 'reunion' && id) {
+    getReunionBox(id).then(res => { if (res?.box) renderReunionBox(res.box); });
+  } else if (page === 'feast' && id) {
+    getFeastBox(id).then(res => { if (res?.box) renderFeastPage(res.box); });
+  } else if (page === 'card' && id) {
+    initCardPage();
   }
 }
 
@@ -2097,6 +2143,30 @@ async function shareReunion(url, box) {
   await copy(message + '\n' + url);
 }
 
+const REUNION_BOX_PRESETS = {
+  tre: { asset: 'assets/box-bamboo.webp', name: 'Hộp mây tre đan' },
+  'son-mai': { asset: 'assets/box-lacquer.webp', name: 'Hộp sơn mài hoa sen' },
+  'bao-cap': { asset: 'assets/box-paper.webp', name: 'Hộp giấy báo xưa' }
+};
+
+function updateReunionBoxPreview(style) {
+  const chosen = REUNION_BOX_PRESETS[style] || REUNION_BOX_PRESETS.tre;
+  const previewBox = document.getElementById('reunion-preview-box');
+  const previewBoxName = document.getElementById('reunion-preview-box-tag') || document.getElementById('reunion-preview-box-name');
+  const previewContainer = document.querySelector('.reunion-preview');
+
+  if (previewBox) {
+    previewBox.src = chosen.asset;
+  }
+  if (previewBoxName) {
+    previewBoxName.textContent = chosen.name;
+  }
+  if (previewContainer) {
+    previewContainer.dataset.style = style;
+  }
+}
+window.updateReunionBoxPreview = updateReunionBoxPreview;
+
 function initCreateReunionPage() {
   const form = $('#reunion-create-form'); if (!form) return;
   const owner = $('#reunion-owner'), title = $('#reunion-title'), message = $('#reunion-message');
@@ -2141,28 +2211,7 @@ function initCreateReunionPage() {
     $('#reunion-preview-tea').textContent = $('#reunion-tea').value;
 
     const selectedStyle = $('input[name="box-style"]:checked')?.value || 'tre';
-    const boxAssets = { tre: 'assets/box-bamboo.webp', 'son-mai': 'assets/box-lacquer.webp', 'bao-cap': 'assets/box-paper.webp' };
-    const boxNames = { tre: 'Hộp mây tre đan', 'son-mai': 'Hộp sơn mài hoa sen', 'bao-cap': 'Hộp giấy báo xưa' };
-
-    const previewBox = $('#reunion-preview-box');
-    const previewBoxName = $('#reunion-preview-box-tag') || $('#reunion-preview-box-name');
-    const previewContainer = $('.reunion-preview');
-    const previewCake = $('#reunion-preview-cake');
-
-    if (previewBox) {
-      const targetSrc = boxAssets[selectedStyle] || boxAssets.tre;
-      if (previewBox.src && !previewBox.src.endsWith(targetSrc)) {
-        previewBox.classList.add('box-swapping');
-        setTimeout(() => {
-          previewBox.src = targetSrc;
-          previewBox.classList.remove('box-swapping');
-        }, 120);
-      } else {
-        previewBox.src = targetSrc;
-      }
-    }
-    if (previewBoxName) previewBoxName.textContent = boxNames[selectedStyle] || 'Hộp mây tre đan';
-    if (previewContainer) previewContainer.dataset.style = selectedStyle;
+    updateReunionBoxPreview(selectedStyle);
     if (previewCake) previewCake.src = cap === 2 ? 'assets/mooncake-cut-2.webp' : 'assets/mooncake-cut-4.webp';
 
     // Mỗi vị trí được thể hiện bằng một chén gốm thật; bàn lớn vẫn xem gọn tối đa 12 chén.
@@ -2189,12 +2238,22 @@ function initCreateReunionPage() {
 
   [title, message, $('#reunion-flavor'), $('#reunion-tea')].forEach(el => el && el.addEventListener('input', syncPreview));
   $$('input[name="box-style"]').forEach(el => {
-    el.addEventListener('change', syncPreview);
-    el.addEventListener('input', syncPreview);
-    el.addEventListener('click', syncPreview);
+    ['change', 'input', 'click'].forEach(evt => {
+      el.addEventListener(evt, () => {
+        updateReunionBoxPreview(el.value);
+        syncPreview();
+      });
+    });
   });
-  $$('.reunion-choice').forEach(el => {
-    el.addEventListener('click', () => setTimeout(syncPreview, 10));
+  $$('.reunion-choice').forEach(card => {
+    card.addEventListener('click', () => {
+      const radio = card.querySelector('input[name="box-style"]');
+      if (radio) {
+        radio.checked = true;
+        updateReunionBoxPreview(radio.value);
+        syncPreview();
+      }
+    });
   });
   updateCustomVisibility();
   syncPreview();
@@ -2361,6 +2420,10 @@ async function initReunionPage() {
 
 async function renderReunionShelf() {
   const shelf = $('#reunion-shelf'); if (!shelf) return;
+  shelf.innerHTML = '<p class="empty-shelf">Đang gọi những bàn trà của bạn…</p>';
+  if (claimReady) {
+    try { await claimReady; } catch {}
+  }
   let entries = [];
   try {
     const response = await fetch(`${FIREBASE_DB_URL}/reunion_members/${state.visitorId}.json`);
@@ -2368,7 +2431,6 @@ async function renderReunionShelf() {
     entries = data ? Object.entries(data).map(([id, value]) => ({ id, ...value })).sort((a, b) => (b.touchedAt || 0) - (a.touchedAt || 0)) : [];
   } catch {}
   if (!entries.length) { shelf.innerHTML = '<p class="empty-shelf">Bạn chưa mở hoặc tham gia bàn trà nào.</p>'; return; }
-  shelf.innerHTML = '<p class="empty-shelf">Đang gọi những bàn trà của bạn…</p>';
   const results = await Promise.all(entries.slice(0, 12).map(async item => ({ item, result: await getReunionBox(item.id) })));
   shelf.replaceChildren();
   results.filter(x => x.result?.box).forEach(({ item, result }) => {
@@ -3068,6 +3130,10 @@ async function initFeastPage() {
 
 async function renderFeastShelf() {
   const shelf = $('#feast-shelf'); if (!shelf) return;
+  shelf.innerHTML = '<p class="empty-shelf">Đang tải những mâm cỗ bạn đã tham gia…</p>';
+  if (claimReady) {
+    try { await claimReady; } catch {}
+  }
   let entries = [];
   try {
     const response = await fetch(`${FIREBASE_DB_URL}/feast_members/${state.visitorId}.json`);
@@ -3078,7 +3144,6 @@ async function renderFeastShelf() {
     shelf.innerHTML = '<p class="empty-shelf">Bạn chưa khởi tạo hoặc tham gia mâm cỗ nào.</p>';
     return;
   }
-  shelf.innerHTML = '<p class="empty-shelf">Đang tải những mâm cỗ bạn đã tham gia…</p>';
   const results = await Promise.all(entries.slice(0, 10).map(async item => ({ item, result: await getFeastBox(item.id) })));
   shelf.replaceChildren();
   results.filter(x => x.result?.box).forEach(({ item, result }) => {

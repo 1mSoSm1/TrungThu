@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600&family=Charm:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=20260921j">
+<link rel="stylesheet" href="style.css?v=20260921k">
 </head>
 <body data-page="create-reunion">
 <div id="atmosphere" aria-hidden="true"></div>
@@ -47,9 +47,9 @@
         <fieldset class="reunion-fieldset">
           <legend>Chọn vỏ hộp</legend>
           <div class="reunion-choice-grid">
-            <label class="reunion-choice"><input type="radio" name="box-style" value="tre" checked><img class="choice-art" src="assets/box-bamboo.webp" alt="Hộp mây tre đan"><b>Mây tre đan</b><small>Mộc mạc, gần gũi</small></label>
-            <label class="reunion-choice"><input type="radio" name="box-style" value="son-mai"><img class="choice-art" src="assets/box-lacquer.webp" alt="Hộp sơn mài hoa sen"><b>Sơn mài hoa sen</b><small>Trang trọng, ấm áp</small></label>
-            <label class="reunion-choice"><input type="radio" name="box-style" value="bao-cap"><img class="choice-art" src="assets/box-paper.webp" alt="Hộp giấy báo xưa"><b>Giấy báo xưa</b><small>Hoài niệm mùa trăng</small></label>
+            <label class="reunion-choice"><input type="radio" name="box-style" value="tre" checked onchange="window.updateReunionBoxPreview&&window.updateReunionBoxPreview(this.value)"><img class="choice-art" src="assets/box-bamboo.webp" alt="Hộp mây tre đan"><b>Mây tre đan</b><small>Mộc mạc, gần gũi</small></label>
+            <label class="reunion-choice"><input type="radio" name="box-style" value="son-mai" onchange="window.updateReunionBoxPreview&&window.updateReunionBoxPreview(this.value)"><img class="choice-art" src="assets/box-lacquer.webp" alt="Hộp sơn mài hoa sen"><b>Sơn mài hoa sen</b><small>Trang trọng, ấm áp</small></label>
+            <label class="reunion-choice"><input type="radio" name="box-style" value="bao-cap" onchange="window.updateReunionBoxPreview&&window.updateReunionBoxPreview(this.value)"><img class="choice-art" src="assets/box-paper.webp" alt="Hộp giấy báo xưa"><b>Giấy báo xưa</b><small>Hoài niệm mùa trăng</small></label>
           </div>
         </fieldset>
 
@@ -108,6 +108,6 @@
   <div class="dialog-actions"><button class="outline" id="share-reunion-link">Chia sẻ lời mời</button><a class="gold" id="open-reunion-link" href="reunion.html">Vào bàn trà</a></div>
 </dialog>
 <div id="toast" role="status" aria-live="polite"></div>
-<script src="app.js?v=20260921j"></script>
+<script src="app.js?v=20260921k"></script>
 </body>
 </html>
