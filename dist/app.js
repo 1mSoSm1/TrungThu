@@ -2024,6 +2024,634 @@ async function renderReunionShelf() {
   if (!shelf.children.length) shelf.innerHTML = '<p class="empty-shelf">Chưa tìm thấy bàn trà nào còn hoạt động.</p>';
 }
 
+/* =========================================================
+   FEAST & PHÁ CỖ LOGIC (Góp cỗ trông trăng & Phá cỗ bí mật)
+   ========================================================= */
+const FEAST_ITEM_MAP = {
+  'cho-buoi': { name: 'Chú chó bưởi lông xù', icon: '🐶', desc: 'Linh hồn mâm cỗ Trung Thu Việt' },
+  'den-ong-sao': { name: 'Đèn ông sao ngũ sắc', icon: '⭐', desc: 'Thắp sáng tuổi thơ rực rỡ' },
+  'nai-chuoi': { name: 'Nải chuối tiêu trứng cuốc', icon: '🍌', desc: 'Nâng đỡ mâm ngũ quả sum vầy' },
+  'com-sen': { name: 'Gói cốm non bọc lá sen', icon: '🌿', desc: 'Hương thơm thanh tao mùa thu' },
+  'banh-nuong': { name: 'Cặp bánh nướng ngũ phúc', icon: '🥮', desc: 'Vị đậm đà gắn kết tình thân' },
+  'banh-deo': { name: 'Cặp bánh dẻo hoa bưởi', icon: '🌕', desc: 'Trắng mịn thanh khiết an yên' },
+  'hong-na': { name: 'Đĩa quả hồng đỏ và na', icon: '🍎', desc: 'Sắc đỏ may mắn và ngọt ngào' },
+  'qua-thi': { name: 'Đĩa thị chín thơm lừng', icon: '🥭', desc: 'Hương thơm cổ tích dịu dàng' },
+  'den-keo-quan': { name: 'Đèn kéo quân cổ truyền', icon: '🏮', desc: 'Bóng hình kỷ niệm đêm trăng' }
+};
+
+let feastStream = null;
+let currentFeastBox = null;
+
+async function rememberFeast(id, role = 'contributor') {
+  if (!id || !state.visitorId) return;
+  try {
+    await fetch(`${FIREBASE_DB_URL}/feast_members/${state.visitorId}/${id}.json`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, role, touchedAt: Date.now() })
+    });
+  } catch {}
+}
+
+async function createFeastBox(data) {
+  const now = new Date().toISOString();
+  const id = 'f_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 6);
+  const target = data.target === 'open' ? 'open' : (parseInt(data.target, 10) || 25);
+  const box = {
+    id,
+    title: safeText(data.title, 60),
+    ownerName: safeText(data.ownerName, 40),
+    ownerId: state.visitorId,
+    style: data.style || 'dong',
+    targetCount: target,
+    message: safeText(data.message, 280),
+    status: 'open',
+    created: now,
+    updated: now,
+    items: {
+      [state.visitorId]: {
+        visitorId: state.visitorId,
+        senderName: safeText(data.ownerName, 40),
+        itemType: data.ownerItem || 'cho-buoi',
+        secretWish: safeText(data.ownerWish, 200),
+        joinedAt: now,
+        isOwner: true,
+        thanked: false
+      }
+    },
+    picks: {}
+  };
+
+  if (!box.ownerName || !box.title || box.message.length < 10) {
+    throw new Error('Vui lòng điền đủ tên, tên mâm cỗ và lời mở hội.');
+  }
+
+  const response = await fetch(`${FIREBASE_DB_URL}/feast_boxes/${id}.json`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(box)
+  });
+  if (!response.ok) throw new Error('Chưa thể tạo mâm cỗ trên Firebase.');
+  await rememberFeast(id, 'owner');
+  return box;
+}
+
+async function getFeastBox(id, withEtag = false) {
+  if (!id) return null;
+  const response = await fetch(`${FIREBASE_DB_URL}/feast_boxes/${encodeURIComponent(id)}.json`, {
+    headers: withEtag ? { 'X-Firebase-ETag': 'true' } : {}
+  });
+  if (!response.ok) return null;
+  return { box: await response.json(), etag: response.headers.get('etag') };
+}
+
+async function saveFeastItem(feastId, name, itemType, secretWish) {
+  name = safeText(name, 40);
+  secretWish = safeText(secretWish, 220);
+  if (!name || secretWish.length < 5) throw new Error('Vui lòng nhập tên và lời chúc bí mật (tối thiểu 5 ký tự).');
+
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const current = await getFeastBox(feastId, true);
+    if (!current?.box) throw new Error('Mâm cỗ không tồn tại.');
+    const box = current.box;
+    const items = box.items || {};
+    const existing = items[state.visitorId];
+
+    items[state.visitorId] = {
+      visitorId: state.visitorId,
+      senderName: name,
+      itemType: itemType || 'cho-buoi',
+      secretWish: secretWish,
+      joinedAt: existing?.joinedAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      isOwner: state.visitorId === box.ownerId,
+      thanked: existing?.thanked || false
+    };
+
+    box.items = items;
+    box.updated = new Date().toISOString();
+
+    const response = await fetch(`${FIREBASE_DB_URL}/feast_boxes/${encodeURIComponent(feastId)}.json`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'if-match': current.etag || '*' },
+      body: JSON.stringify(box)
+    });
+    if (response.ok) {
+      await rememberFeast(feastId, state.visitorId === box.ownerId ? 'owner' : 'contributor');
+      return box;
+    }
+    if (response.status !== 412) throw new Error('Chưa thể lưu món cỗ lên máy chủ.');
+  }
+  throw new Error('Nhiều người đang góp cỗ cùng lúc. Vui lòng thử lại.');
+}
+
+async function triggerFeastCelebration(feastId) {
+  const current = await getFeastBox(feastId);
+  if (!current?.box) return;
+  const box = current.box;
+  box.status = 'celebrating';
+  box.celebratedAt = new Date().toISOString();
+  box.updated = new Date().toISOString();
+  await fetch(`${FIREBASE_DB_URL}/feast_boxes/${encodeURIComponent(feastId)}.json`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(box)
+  });
+  return box;
+}
+
+async function drawFeastGift(feastId) {
+  const current = await getFeastBox(feastId);
+  if (!current?.box) throw new Error('Mâm cỗ không còn tồn tại.');
+  const box = current.box;
+  const picks = box.picks || {};
+
+  if (picks[state.visitorId]) {
+    const existingSenderId = picks[state.visitorId].senderId;
+    const item = box.items?.[existingSenderId];
+    return { item, senderId: existingSenderId, isNew: false };
+  }
+
+  const itemKeys = Object.keys(box.items || {});
+  if (!itemKeys.length) throw new Error('Mâm cỗ chưa có món nào.');
+
+  const pool = itemKeys.length > 1 ? itemKeys.filter(k => k !== state.visitorId) : itemKeys;
+  const chosenKey = pool[Math.floor(Math.random() * pool.length)];
+  const chosenItem = box.items[chosenKey];
+
+  picks[state.visitorId] = {
+    receiverId: state.visitorId,
+    receiverName: state.name || 'Người bạn',
+    senderId: chosenKey,
+    pickedAt: new Date().toISOString()
+  };
+
+  box.picks = picks;
+  box.updated = new Date().toISOString();
+
+  await fetch(`${FIREBASE_DB_URL}/feast_boxes/${encodeURIComponent(feastId)}/picks/${state.visitorId}.json`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(picks[state.visitorId])
+  });
+
+  return { item: chosenItem, senderId: chosenKey, isNew: true };
+}
+
+async function markFeastThanked(feastId, senderId) {
+  try {
+    await fetch(`${FIREBASE_DB_URL}/feast_boxes/${encodeURIComponent(feastId)}/items/${senderId}/thanked.json`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(true)
+    });
+  } catch {}
+}
+
+function initCreateFeastPage() {
+  const form = $('#feast-create-form'); if (!form) return;
+  const owner = $('#feast-owner'), title = $('#feast-title'), message = $('#feast-message');
+  const ownerWish = $('#feast-owner-wish');
+  if (!owner.value) owner.value = state.name || '';
+
+  const syncPreview = () => {
+    $('#feast-preview-title').textContent = title.value || 'Mâm cỗ Lớp 12A3';
+    $('#feast-preview-message').textContent = message.value || 'Một mâm cỗ đầy đặn đang chờ từng người bạn chung tay vun vén.';
+    const targetVal = $('input[name="feast-target"]:checked')?.value || '25';
+    $('#feast-preview-target').textContent = targetVal === 'open' ? 'Mục tiêu: Mở rộng tự do' : `Mục tiêu: ${targetVal} món cỗ`;
+    const styleVal = $('input[name="feast-style"]:checked')?.value || 'dong';
+    const styleNames = { dong: 'Mâm đồng cổ truyền', tre: 'Mẹt tre lá chuối', 'son-mai': 'Khay gấm hoa sen' };
+    $('#feast-preview-style').textContent = styleNames[styleVal] || 'Mâm cỗ truyền thống';
+    const stage = $('#feast-preview-stage');
+    if (stage) stage.dataset.style = styleVal;
+  };
+
+  [title, message, ownerWish].forEach(el => el && el.addEventListener('input', syncPreview));
+  document.querySelectorAll('input[name="feast-target"], input[name="feast-style"]').forEach(el => el.addEventListener('change', syncPreview));
+  syncPreview();
+
+  form.onsubmit = async e => {
+    e.preventDefault();
+    const btn = form.querySelector('[type="submit"]');
+    btn.disabled = true; btn.textContent = 'Đang khởi tạo mâm cỗ…';
+    try {
+      const box = await createFeastBox({
+        ownerName: owner.value,
+        title: title.value,
+        message: message.value,
+        style: $('input[name="feast-style"]:checked')?.value,
+        target: $('input[name="feast-target"]:checked')?.value,
+        ownerItem: $('#feast-owner-item')?.value,
+        ownerWish: ownerWish.value
+      });
+      state.name = box.ownerName; save();
+      const url = new URL('feast.html?id=' + box.id, location.href).href;
+      $('#feast-link-output').value = url;
+      $('#open-feast-link').href = url;
+      $('#feast-result-dialog').showModal();
+    } catch (err) { toast(err.message); }
+    finally { btn.disabled = false; btn.textContent = 'Khởi tạo Mâm Cỗ & Lấy liên kết mời'; }
+  };
+
+  $('#copy-feast-link').onclick = () => copy($('#feast-link-output').value);
+  $('#share-feast-link').onclick = () => {
+    const url = $('#feast-link-output').value;
+    const msg = `Mời bạn cùng vào góp cỗ trông trăng cho “${title.value || 'Mâm Cỗ Đoàn Viên'}”!`;
+    if (navigator.share) navigator.share({ title: 'Góp Cỗ Trông Trăng', text: msg, url }).catch(() => {});
+    else copy(msg + '\n' + url);
+  };
+  $('#close-feast-result').onclick = () => $('#feast-result-dialog').close();
+}
+
+function renderFeastPage(box) {
+  if (!box || !$('#feast-content')) return;
+  currentFeastBox = box;
+  $('#feast-loading').hidden = true; $('#feast-error').hidden = true; $('#feast-content').hidden = false;
+
+  const items = Object.values(box.items || {}).sort((a, b) => String(a.joinedAt).localeCompare(String(b.joinedAt)));
+  const count = items.length;
+  const target = box.targetCount === 'open' ? 'open' : (parseInt(box.targetCount, 10) || 25);
+  const isTargetOpen = target === 'open';
+  const complete = isTargetOpen ? count >= 10 : count >= target;
+  const isCelebrating = box.status === 'celebrating';
+
+  // Status badge & texts
+  $('#feast-table-title').textContent = box.title || 'Mâm Cỗ Đoàn Viên';
+  $('#feast-owner-name').textContent = box.ownerName || 'Chủ xị';
+  $('#feast-invitation-text').textContent = box.message || '';
+  $('#feast-stage').dataset.style = box.style || 'dong';
+
+  const badge = $('#feast-status-badge');
+  if (isCelebrating) {
+    badge.textContent = '✦ ĐÃ MỞ HỘI PHÁ CỖ ✦';
+    badge.style.color = '#ffd700';
+  } else {
+    badge.textContent = `ĐẠI HỘI TRĂNG RẰM · ĐANG GÓP CỖ (${count}${isTargetOpen ? '' : '/' + target} MÓN)`;
+    badge.style.color = '';
+  }
+
+  // Progress bar
+  $('#feast-progress-stats').textContent = `Đã có ${count} người góp cỗ`;
+  $('#feast-progress-target').textContent = isTargetOpen ? 'Mục tiêu: Tự do sum vầy' : `Mục tiêu: ${target} món`;
+  const pct = isTargetOpen ? Math.min(100, count * 5) : Math.min(100, Math.round((count / target) * 100));
+  $('#feast-progress-bar').style.width = pct + '%';
+  $('#feast-progress-sub').textContent = isCelebrating
+    ? 'Đại lễ phá cỗ đang diễn ra rộn rã! Hãy bốc quà may mắn của bạn.'
+    : (complete ? 'Mâm cỗ đã đủ đầy! Chủ xị có thể bấm Mở Hội Phá Cỗ.' : `Cần thêm ${isTargetOpen ? 'nhiều' : Math.max(0, target - count)} món cỗ nữa để cùng nhau mở hội.`);
+
+  // Action Buttons
+  const myItem = (box.items || {})[state.visitorId];
+  const myPick = (box.picks || {})[state.visitorId];
+  const isOwner = state.visitorId === box.ownerId;
+
+  const btnContribute = $('#btn-open-contribute');
+  btnContribute.textContent = myItem ? 'Sửa món cỗ của bạn' : 'Góp một món vào mâm';
+
+  const btnCelebrate = $('#btn-start-celebrate');
+  btnCelebrate.hidden = isCelebrating || (!isOwner && !complete);
+
+  const btnPick = $('#btn-pick-gift');
+  btnPick.hidden = !isCelebrating;
+  if (btnPick && !btnPick.hidden) {
+    btnPick.textContent = myPick ? 'Xem Lại Quà Bạn Đã Bốc' : 'Hái Lộc Phá Cỗ (Bốc Quà May Mắn)';
+  }
+
+  $('#feast-celebration-banner').hidden = !isCelebrating;
+
+  // Render Platter Items (supports up to 100+ items!)
+  const container = $('#feast-items-container');
+  container.replaceChildren();
+
+  // Multi-tier radial distribution algorithm
+  let rings = [];
+  if (count <= 10) {
+    rings = [{ count: count, radius: 38 }];
+  } else if (count <= 25) {
+    const inner = Math.floor(count * 0.4);
+    rings = [{ count: inner, radius: 26 }, { count: count - inner, radius: 42 }];
+  } else if (count <= 60) {
+    const r1 = Math.floor(count * 0.22);
+    const r2 = Math.floor(count * 0.38);
+    rings = [{ count: r1, radius: 21 }, { count: r2, radius: 33 }, { count: count - r1 - r2, radius: 44 }];
+  } else {
+    const r1 = Math.floor(count * 0.15);
+    const r2 = Math.floor(count * 0.25);
+    const r3 = Math.floor(count * 0.3);
+    rings = [
+      { count: r1, radius: 19 },
+      { count: r2, radius: 28 },
+      { count: r3, radius: 37 },
+      { count: count - r1 - r2 - r3, radius: 46 }
+    ];
+  }
+
+  let itemIdx = 0;
+  rings.forEach((ring, ringIdx) => {
+    const ringItemsCount = ring.count;
+    const radiusPct = ring.radius;
+    const offset = -90 + (ringIdx * 17);
+
+    for (let i = 0; i < ringItemsCount; i++) {
+      if (itemIdx >= count) break;
+      const item = items[itemIdx];
+      const angle = offset + (i * (360 / ringItemsCount));
+      const rad = angle * Math.PI / 180;
+      const leftPct = 50 + Math.cos(rad) * radiusPct;
+      const topPct = 50 + Math.sin(rad) * radiusPct;
+
+      const node = document.createElement('div');
+      node.className = 'feast-item-node' + (item.visitorId === state.visitorId ? ' mine' : '') + (!isCelebrating ? ' sealed' : '');
+      node.id = `item-node-${item.visitorId}`;
+      node.style.left = leftPct + '%';
+      node.style.top = topPct + '%';
+
+      const meta = FEAST_ITEM_MAP[item.itemType] || FEAST_ITEM_MAP['cho-buoi'];
+      const badge = document.createElement('span');
+      badge.className = 'item-badge';
+      badge.textContent = meta.icon;
+      badge.title = `${item.senderName}: ${meta.name}`;
+
+      const tag = document.createElement('span');
+      tag.className = 'item-tag' + (item.visitorId === state.visitorId ? ' mine-tag' : '');
+      tag.textContent = item.visitorId === state.visitorId ? '☾ Bạn' : item.senderName;
+
+      node.append(badge, tag);
+      node.onclick = () => openItemInspect(item, isCelebrating, myPick);
+      container.appendChild(node);
+
+      itemIdx++;
+    }
+  });
+
+  // Render Contributor Wall
+  renderFeastWall(items, myPick, isCelebrating);
+}
+
+function openItemInspect(item, isCelebrating, myPick) {
+  const dialog = $('#item-inspect-dialog'); if (!dialog) return;
+  const meta = FEAST_ITEM_MAP[item.itemType] || FEAST_ITEM_MAP['cho-buoi'];
+
+  $('#inspect-item-title').textContent = meta.name;
+  $('#inspect-avatar').textContent = meta.icon;
+  $('#inspect-sender-name').textContent = item.senderName + (item.isOwner ? ' · Chủ xị mâm cỗ' : '');
+  $('#inspect-time').textContent = `Góp vào: ${new Date(item.joinedAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}`;
+
+  const isMine = item.visitorId === state.visitorId;
+  const isPickedByMe = myPick && myPick.senderId === item.visitorId;
+  const canReadWish = isMine || isPickedByMe;
+
+  const sealedBox = $('#inspect-sealed-box');
+  const unsealedBox = $('#inspect-unsealed-box');
+
+  if (canReadWish) {
+    sealedBox.hidden = true;
+    unsealedBox.hidden = false;
+    $('#inspect-secret-content').textContent = item.secretWish;
+    const thankRow = $('#inspect-thank-row');
+    const thankedNote = $('#inspect-thanked-note');
+    thankRow.hidden = isMine || item.thanked;
+    thankedNote.hidden = !item.thanked;
+
+    $('#btn-thank-sender').onclick = async () => {
+      if (!currentFeastBox) return;
+      await markFeastThanked(currentFeastBox.id, item.visitorId);
+      item.thanked = true;
+      thankRow.hidden = true;
+      thankedNote.hidden = false;
+      toast(`Đã gửi lời cảm ơn ấm lòng đến ${item.senderName}!`);
+    };
+  } else {
+    sealedBox.hidden = false;
+    unsealedBox.hidden = true;
+  }
+
+  dialog.showModal();
+}
+
+function renderFeastWall(items, myPick, isCelebrating) {
+  const list = $('#feast-contributors-list'); if (!list) return;
+  const searchInput = $('#feast-search-input');
+  const query = (searchInput?.value || '').toLowerCase().trim();
+
+  const filtered = items.filter(item => {
+    if (!query) return true;
+    const meta = FEAST_ITEM_MAP[item.itemType] || FEAST_ITEM_MAP['cho-buoi'];
+    return item.senderName.toLowerCase().includes(query) || meta.name.toLowerCase().includes(query);
+  });
+
+  $('#feast-wall-count').textContent = `${items.length} người đã góp cỗ`;
+  list.replaceChildren();
+
+  if (!filtered.length) {
+    list.innerHTML = '<p class="empty-shelf">Không tìm thấy người bạn nào phù hợp.</p>';
+    return;
+  }
+
+  filtered.forEach(item => {
+    const meta = FEAST_ITEM_MAP[item.itemType] || FEAST_ITEM_MAP['cho-buoi'];
+    const card = document.createElement('div');
+    card.className = 'feast-contributor-card';
+
+    const avatar = document.createElement('span');
+    avatar.className = 'feast-contributor-avatar';
+    avatar.textContent = meta.icon;
+
+    const metaBox = document.createElement('div');
+    metaBox.className = 'feast-contributor-meta';
+    const nameB = document.createElement('b');
+    nameB.textContent = item.senderName + (item.isOwner ? ' · Chủ xị' : '');
+    const itemS = document.createElement('small');
+    itemS.textContent = meta.name;
+    metaBox.append(nameB, itemS);
+
+    const badge = document.createElement('span');
+    badge.className = 'feast-contributor-badge';
+    if (myPick && myPick.senderId === item.visitorId) {
+      badge.className += ' unsealed';
+      badge.textContent = 'Bạn đã bốc';
+    } else if (item.visitorId === state.visitorId) {
+      badge.textContent = 'Món của bạn';
+    } else {
+      badge.textContent = isCelebrating ? 'Đã lên mâm' : 'Niêm phong';
+    }
+
+    card.append(avatar, metaBox, badge);
+    card.onclick = () => {
+      // Highlight on the platter
+      const targetNode = document.getElementById(`item-node-${item.visitorId}`);
+      if (targetNode) {
+        document.querySelectorAll('.feast-item-node').forEach(el => el.classList.remove('highlighted'));
+        targetNode.classList.add('highlighted');
+        targetNode.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setTimeout(() => targetNode.classList.remove('highlighted'), 3200);
+      }
+    };
+    list.appendChild(card);
+  });
+}
+
+async function initFeastPage() {
+  const id = new URLSearchParams(location.search).get('id');
+  if (!id) { $('#feast-loading').hidden = true; $('#feast-error').hidden = false; return; }
+
+  try {
+    const result = await getFeastBox(id);
+    if (!result?.box) throw new Error('not-found');
+    renderFeastPage(result.box);
+
+    if (feastStream) feastStream.close();
+    if (window.EventSource) {
+      feastStream = new EventSource(`${FIREBASE_DB_URL}/feast_boxes/${encodeURIComponent(id)}.json`);
+      const refresh = async () => {
+        const latest = await getFeastBox(id);
+        if (latest?.box) renderFeastPage(latest.box);
+      };
+      feastStream.addEventListener('put', refresh);
+      feastStream.addEventListener('patch', refresh);
+    }
+
+    // Search filter input
+    $('#feast-search-input')?.addEventListener('input', () => {
+      if (currentFeastBox) {
+        const items = Object.values(currentFeastBox.items || {});
+        renderFeastWall(items, currentFeastBox.picks?.[state.visitorId], currentFeastBox.status === 'celebrating');
+      }
+    });
+
+    // Contribute dialog open
+    $('#btn-open-contribute').onclick = () => {
+      const dialog = $('#contribute-dialog');
+      const myItem = currentFeastBox?.items?.[state.visitorId];
+      if (myItem) {
+        $('#contribute-name').value = myItem.senderName || state.name || '';
+        $('#contribute-item-type').value = myItem.itemType || 'cho-buoi';
+        $('#contribute-secret-wish').value = myItem.secretWish || '';
+        $('#contribute-dialog-title').textContent = 'Sửa món cỗ của bạn';
+        $('#btn-submit-contribute').textContent = 'Cập nhật món cỗ';
+      } else {
+        $('#contribute-name').value = state.name || '';
+        $('#contribute-dialog-title').textContent = 'Góp một món vào mâm cỗ';
+        $('#btn-submit-contribute').textContent = 'Đặt món cỗ lên mâm';
+      }
+      dialog.showModal();
+    };
+    $('#close-contribute-dialog').onclick = () => $('#contribute-dialog').close();
+
+    // Contribute submit
+    $('#contribute-form').onsubmit = async e => {
+      e.preventDefault();
+      const btn = $('#btn-submit-contribute');
+      btn.disabled = true;
+      try {
+        const name = $('#contribute-name').value;
+        const itemType = $('#contribute-item-type').value;
+        const secretWish = $('#contribute-secret-wish').value;
+        const updatedBox = await saveFeastItem(id, name, itemType, secretWish);
+        state.name = safeText(name, 40);
+        save();
+        renderFeastPage(updatedBox);
+        $('#contribute-dialog').close();
+        toast('Món cỗ của bạn đã được đặt trang trọng lên mâm!');
+      } catch (err) { toast(err.message); }
+      finally { btn.disabled = false; }
+    };
+
+    // Close inspect dialog
+    $('#close-inspect-dialog').onclick = () => $('#item-inspect-dialog').close();
+
+    // Start celebration (Host action)
+    $('#btn-start-celebrate').onclick = async () => {
+      if (!confirm('Bạn có chắc chắn muốn MỞ HỘI PHÁ CỖ cho cả nhóm ngay bây giờ?')) return;
+      try {
+        const updated = await triggerFeastCelebration(id);
+        renderFeastPage(updated);
+        toast('Màn mở hội phá cỗ đã bắt đầu! Tiếng trống tùng rinh vang dội!');
+      } catch (err) { toast(err.message); }
+    };
+
+    // Pick gift (Lucky Draw)
+    $('#btn-pick-gift').onclick = async () => {
+      const btn = $('#btn-pick-gift');
+      btn.disabled = true;
+      try {
+        const drawResult = await drawFeastGift(id);
+        const item = drawResult.item;
+        const meta = FEAST_ITEM_MAP[item.itemType] || FEAST_ITEM_MAP['cho-buoi'];
+
+        $('#lucky-gift-icon').textContent = meta.icon;
+        $('#lucky-item-name').textContent = meta.name;
+        $('#lucky-sender-name').textContent = item.senderName;
+        $('#lucky-secret-wish').textContent = item.secretWish;
+        $('#lucky-signer').textContent = `— ${item.senderName} gửi gắm đêm trăng`;
+
+        const thankBtn = $('#btn-lucky-thank');
+        thankBtn.hidden = item.visitorId === state.visitorId || item.thanked;
+        thankBtn.onclick = async () => {
+          await markFeastThanked(id, item.visitorId);
+          thankBtn.hidden = true;
+          toast(`Đã gửi lời cảm ơn chân thành đến ${item.senderName}!`);
+        };
+
+        $('#btn-save-lucky-card').onclick = () => {
+          toast('Món quà may mắn đã được lưu giữ trong Trang của bạn!');
+          $('#lucky-draw-dialog').close();
+        };
+
+        $('#lucky-draw-dialog').showModal();
+        // Re-render feast
+        const latest = await getFeastBox(id);
+        if (latest?.box) renderFeastPage(latest.box);
+      } catch (err) { toast(err.message); }
+      finally { btn.disabled = false; }
+    };
+    $('#close-lucky-dialog').onclick = () => $('#lucky-draw-dialog').close();
+
+    // Share link button
+    $('#btn-share-feast').onclick = () => {
+      const url = location.href;
+      const msg = `Mời bạn cùng vào góp cỗ trông trăng cho “${currentFeastBox?.title || 'Mâm Cỗ Đoàn Viên'}”!`;
+      if (navigator.share) navigator.share({ title: 'Góp Cỗ Trông Trăng', text: msg, url }).catch(() => {});
+      else copy(msg + '\n' + url);
+    };
+
+  } catch {
+    $('#feast-loading').hidden = true;
+    $('#feast-error').hidden = false;
+  }
+}
+
+async function renderFeastShelf() {
+  const shelf = $('#feast-shelf'); if (!shelf) return;
+  let entries = [];
+  try {
+    const response = await fetch(`${FIREBASE_DB_URL}/feast_members/${state.visitorId}.json`);
+    const data = response.ok ? await response.json() : null;
+    entries = data ? Object.entries(data).map(([id, value]) => ({ id, ...value })).sort((a, b) => (b.touchedAt || 0) - (a.touchedAt || 0)) : [];
+  } catch {}
+  if (!entries.length) {
+    shelf.innerHTML = '<p class="empty-shelf">Bạn chưa khởi tạo hoặc tham gia mâm cỗ nào.</p>';
+    return;
+  }
+  shelf.innerHTML = '<p class="empty-shelf">Đang tải những mâm cỗ bạn đã tham gia…</p>';
+  const results = await Promise.all(entries.slice(0, 10).map(async item => ({ item, result: await getFeastBox(item.id) })));
+  shelf.replaceChildren();
+  results.filter(x => x.result?.box).forEach(({ item, result }) => {
+    const box = result.box, count = Object.keys(box.items || {}).length;
+    const card = document.createElement('a');
+    card.className = 'reunion-shelf-card';
+    card.href = `feast.html?id=${box.id}`;
+    const icon = document.createElement('span'), body = document.createElement('div'), title = document.createElement('b'), meta = document.createElement('small'), arrow = document.createElement('em');
+    icon.textContent = '🏮';
+    title.textContent = box.title;
+    meta.textContent = `${item.role === 'owner' ? 'Mâm cỗ bạn tạo' : 'Mâm cỗ bạn góp'} · ${count} món · ${box.status === 'celebrating' ? 'Đang mở hội' : 'Đang góp'}`;
+    arrow.textContent = '→';
+    body.append(title, meta);
+    card.append(icon, body, arrow);
+    shelf.append(card);
+  });
+  if (!shelf.children.length) shelf.innerHTML = '<p class="empty-shelf">Chưa tìm thấy mâm cỗ nào còn hoạt động.</p>';
+}
+
 function initPage() {
   const page = document.body.dataset.page || 'home';
   updateActiveNav(page);
@@ -2038,13 +2666,19 @@ function initPage() {
     initCreateReunionPage();
   } else if (page === 'reunion') {
     initReunionPage();
+  } else if (page === 'create-feast') {
+    initCreateFeastPage();
+  } else if (page === 'feast') {
+    initFeastPage();
   } else if (page === 'profile') {
     renderReunionShelf();
+    renderFeastShelf();
   }
 
   if (page !== 'reunion' && reunionStream) { reunionStream.close(); reunionStream = null; }
+  if (page !== 'feast' && feastStream) { feastStream.close(); feastStream = null; }
 
-  if (!state.name && page !== 'card' && page !== 'reunion') {
+  if (!state.name && page !== 'card' && page !== 'reunion' && page !== 'feast') {
     const welcome = $('#welcome');
     if (welcome && !welcome.open) welcome.showModal();
   }

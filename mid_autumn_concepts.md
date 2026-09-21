@@ -109,13 +109,15 @@ graph TD
 
 ```mermaid
 graph TD
-    A["Trưởng Nhóm Khởi Tạo Mâm Cỗ"] --> B["Đặt Tên Mâm Cỗ & Chọn Mục Tiêu Số Món"]
+    A["Chủ Xị Khởi Tạo Mâm Cỗ"] --> B["Đặt Tên Mâm Cỗ & Chọn Quy Mô: 12 / 25 / 50 / 100+ món"]
     B --> C["Chia Sẻ Link Vào Nhóm Zalo / Messenger"]
     C --> D["Từng Thành Viên Mở Link & Bấm 'Góp Một Món'"]
-    D --> E["Chọn Thức Cỗ Dân Gian + Ghi Tên & Lời Chúc"]
-    E --> F["Món Ăn Xuất Hiện Trên Mâm Kèm Thẻ Tên"]
-    F --> G{"Mâm Cỗ Đủ Món Hoặc Chủ Mâm Bấm Phá Cỗ"}
-    G --> H["CÙNG PHÁ CỖ: Trống Tùng Rinh, Pháo Hoa & Bốc Quẻ May Mắn"]
+    D --> E["Chọn Thức Cỗ + Ghi Tên + Viết LỜI CHÚC BÍ MẬT"]
+    E --> F["Món Cỗ Xuất Hiện Kèm Thẻ Tên · Lời Chúc Được Niêm Phong"]
+    F --> G{"Đủ Mốc Hoặc Chủ Xị Bấm 'Mở Hội Phá Cỗ'"}
+    G --> H["CÙNG PHÁ CỖ: Trống Tùng Rinh, Hái Lộc May Mắn"]
+    H --> I["Mở Khóa Lời Chúc Bí Mật Dành Riêng Cho Người Bốc Được"]
+    I --> J["Người Nhận Gửi Lời Cảm Ơn Đến Người Tặng"]
 ```
 
 ---
@@ -123,41 +125,50 @@ graph TD
 ### 2.2. Trải Nghiệm Chi Tiết
 
 #### Bước 1: Khởi Tạo Mâm Cỗ (Tạo Không Gian Chung)
-* Bất kỳ ai cũng có thể làm "Chủ mâm" bằng cách bấm **"Tạo Mâm Cỗ Đoàn Viên"**.
-* Thiết lập đơn giản:
-  * Đặt tên mâm cỗ (Ví dụ: *"Mâm cỗ Lớp 12A3"*, *"Mâm cỗ Đại gia đình Nhà Ngoại"*, *"Mâm cỗ Xóm Trọ 502"*).
-  * Chọn kiểu mâm: *Mâm đồng cổ truyền* hoặc *Mẹt tre lót lá chuối xanh*.
-  * Chọn mục tiêu phá cỗ: Góp đủ 5 món, 8 món, hoặc 12 món.
+* Bất kỳ ai cũng có thể làm "Chủ xị" bằng cách bấm **"Khởi Tạo Mâm Cỗ Trông Trăng"**.
+* Thiết lập linh hoạt:
+  * Đặt tên mâm cỗ (Ví dụ: *"Mâm cỗ Lớp 12A3"*, *"Mâm cỗ Đại gia đình Nhà Ngoại"*, *"Hội Trăng Rằm Xóm 502"*).
+  * Chọn kiểu mâm: *Mâm đồng cổ truyền*, *Mẹt tre lót lá chuối*, hoặc *Khay gấm hoa sen*.
+  * Chọn quy mô: **12 món**, **25 món**, **50 món**, **100 món** (Đại tiệc trường/khối) hoặc **Mở rộng tự do**.
+  * Chủ xị đóng góp luôn món cỗ mở màn kèm lời chúc bí mật đầu tiên.
 
 #### Bước 2: Chia Sẻ Link Vào Nhóm
-* Hệ thống sinh ra một đường dẫn đặc biệt: `trungthu.vn/mam-co/[ma-mam-co]`.
-* Chủ mâm gửi link vào nhóm bạn bè, người thân để rủ rê mọi người vào "góp cỗ".
+* Hệ thống sinh ra một đường dẫn chia sẻ: `feast.html?id=[ma-mam-co]`.
+* Gửi link vào nhóm Zalo, Messenger, Facebook của lớp, công ty hoặc gia đình.
 
 #### Bước 3: Thành Viên Tham Gia "Góp Cỗ"
 * Khi một người bạn bấm vào link:
-  * Sẽ thấy chiếc mâm đồng/mẹt tre đang dần được lấp đầy bởi các món bạn bè trước đó đã góp.
+  * Sẽ thấy chiếc mâm cỗ đang được lấp đầy bởi các món bạn bè trước đó đã góp.
   * Bấm nút **"Góp một món vào mâm"**.
-  * Danh sách các thức cỗ dân gian Việt Nam để chọn (không trùng lặp hoặc được xếp cạnh nhau):
-    1. **Chú chó bưởi lông xù mắt hạt nhãn:** Biểu tượng truyền đời của mâm cỗ Trung Thu Việt.
-    2. **Nải chuối tiêu chín trứng cuốc:** Dáng quả cong như bàn tay nâng đỡ mâm ngũ quả.
-    3. **Đĩa hồng đỏ mọng & quả na mở mắt:** Sắc đỏ may mắn và hương thơm nồng nàn mùa thu.
-    4. **Gói cốm non lá sen buộc rơm vàng:** Món quà thanh khiết của đồng quê.
-    5. **Cặp bánh nướng bánh dẻo ngũ phúc:** Điểm nhấn trang trọng giữa mâm.
-    6. **Đèn ông sao 5 cánh giấy kính viền tua rua:** Cắm cao vút thắp sáng cả mâm cỗ.
+  * Chọn thức cỗ dân gian Việt Nam:
+    1. **Chú chó bưởi lông xù mắt hạt nhãn:** Linh hồn mâm cỗ Trung Thu Việt.
+    2. **Đèn ông sao 5 cánh giấy kính đỏ rực rỡ:** Thắp sáng tuổi thơ.
+    3. **Nải chuối tiêu chín trứng cuốc:** Nâng đỡ mâm ngũ quả sum vầy.
+    4. **Gói cốm non lá sen buộc rơm vàng:** Món quà đồng quê thanh nhã.
+    5. **Cặp bánh nướng bánh dẻo ngũ phúc:** Tượng trưng viên mãn, gắn kết.
+    6. **Đĩa hồng đỏ mọng & quả na mở mắt:** Sắc đỏ may mắn mùa thu.
     7. **Đĩa thị chín vàng thơm nức:** Hương thơm cổ tích bước ra từ truyện Tấm Cám.
-  * Người góp nhập: **Tên của mình** + **Một lời chúc gửi đến cả nhóm**.
+    8. **Đèn kéo quân cổ truyền:** Những bóng hình kỷ niệm đêm trăng.
+  * Nhập: **Tên của bạn** + **Tâm thư bí mật gửi người bốc được quà**.
 
-#### Bước 4: Mâm Cỗ Đầy Đặn Lên Trực Quan
-* Món đồ vừa góp sẽ xuất hiện sống động ngay trên mâm cỗ kèm một thẻ tên nhỏ xinh đính bên cạnh (Ví dụ: *"Lan góp Chó bưởi"*, *"Huy góp Đèn ông sao"*).
-* Khi rê chuột hoặc chạm vào món đồ, lời chúc của người đó sẽ hiện lên ấm áp.
-* Thanh tiến trình hiển thị rõ: *"Mâm cỗ đã hoàn thành 7/8 món - Sắp đến giờ phá cỗ!"*.
+#### Bước 4: Mâm Cỗ Trực Quan Đa Tầng & Lời Chúc Niêm Phong
+* **Hiển thị trực quan linh hoạt từ 1 đến 100+ món:**
+  * Thuật toán tự động sắp xếp các món đồ cỗ theo các vòng đồng tâm (từ 1 đến 4 tầng cỗ) tùy theo số lượng tham gia, không bao giờ bị đè hay rối mắt.
+* **Cơ chế NIÊM PHONG bí mật:**
+  * Mọi người bấm vào bất kỳ món nào trên mâm đều thấy tên người góp (*"Chú chó bưởi do Tuấn Anh mang đến"*).
+  * Nhưng lời chúc bên trong được dán **Phong bao niêm phong đỏ**. Chưa ai đọc được lời chúc này cho đến giờ Phá Cỗ.
+* **Bảng Vàng Đoàn Viên:**
+  * Danh sách toàn bộ thành viên đã góp cỗ kèm công cụ tìm kiếm nhanh theo tên.
+  * Bấm vào tên ai -> Món đồ của người đó trên mâm cỗ sẽ phát sáng rực rỡ và nhảy nhẹ lên!
 
-#### Bước 5: Đại Lễ "CÙNG NHAU PHÁ CỖ"
-* **Kích hoạt:** Khi đủ 100% mục tiêu, hoặc khi Chủ mâm quyết định bấm nút **"Phá Cỗ Trông Trăng"**.
-* **Hiệu ứng bùng nổ:**
-  * Màn hình chuyển sang khung cảnh đêm trăng rực sáng với tiếng trống múa lân *"Tùng... cheng... tùng rinh rinh"* rộn ràng.
-  * Mâm cỗ tỏa sáng rực rỡ, pháo hoa giấy ngũ sắc bay lượn.
-  * **Phần thưởng may mắn cho từng thành viên:**
+#### Bước 5: Đại Lễ "CÙNG NHAU PHÁ CỖ" & Hái Lộc Bí Mật
+* **Kích hoạt:** Khi đủ mục tiêu, hoặc khi Chủ xị bấm nút **"Mở Hội Phá Cỗ"**.
+* **Hiệu ứng bùng nổ:** Tiếng trống múa lân vang dội *"Tùng rinh rinh"*, pháo hoa rực sáng màn hình.
+* **Hái Lộc Phá Cỗ (Cơ chế đổi quà bí mật):**
+  * Từng thành viên bấm nút **"Hái Lộc Phá Cỗ"** -> Màn hình bốc ngẫu nhiên một món quà từ mâm cỗ trao cho bạn!
+  * **Khoảnh khắc mở niêm phong:** Phong bao đỏ bung mở, hé lộ bức tâm thư chân thành của người bạn đã tặng món quà đó riêng cho bạn.
+  * **Hành động đáp lễ:** Người nhận bấm **"Gửi lời cảm ơn người tặng"** -> Người tặng nhận được thông báo ấm lòng: *"Bạn [Hà My] đã bốc trúng món quà của bạn và gửi lời cảm ơn!"*.
+  * Món quà và lời chúc được lưu giữ vĩnh viễn trong Trang của bạn.
     * Mỗi người tham gia bấm vào một món trên mâm cỗ để nhận một **"Quẻ Lộc Mùa Trăng"** (những lời tiên tri hài hước, may mắn về thi cử, công việc, tình duyên).
   * **Lưu giữ kỷ niệm:** Nút **"Chụp ảnh kỷ niệm mâm cỗ"** để tải về bức tranh mâm cỗ hoàn chỉnh có đầy đủ tên của tất cả thành viên trong nhóm làm kỷ niệm.
 

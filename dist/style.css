@@ -1637,6 +1637,611 @@ dialog[open] {
 @media(max-width:600px){.reunion-create-section,.reunion-page{padding-left:14px;padding-right:14px}.reunion-choice-grid{grid-template-columns:1fr}.reunion-pair-grid{grid-template-columns:1fr}.capacity-grid{grid-template-columns:repeat(2,1fr)}.tea-scene{min-height:470px;padding:12px}.tea-table{margin-top:20px;width:100%}.reunion-seat{width:65px}.reunion-seat .tea-cup{width:34px;height:28px}.reunion-seat b{font-size:8px}.mooncake{border-width:7px}.share-link-row{flex-direction:column}.reunion-shelf-head{align-items:start;flex-direction:column}}
 
 /* =========================================================
+   FEAST & PHÁ CỖ (create-feast.html & feast.html)
+   ========================================================= */
+.feast-create-section, .feast-page {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding-top: clamp(24px, 4vw, 56px);
+}
+.feast-heading {
+  margin-bottom: 24px;
+}
+.feast-action-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: linear-gradient(145deg, rgba(24, 36, 58, 0.85), rgba(11, 19, 34, 0.9));
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 20px 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25);
+}
+.feast-quote {
+  font-family: 'Charm', cursive;
+  font-size: 20px;
+  color: #f7dfbe;
+  line-height: 1.6;
+  margin: 0;
+  text-align: center;
+}
+.feast-cta-group {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.festive-pulse {
+  animation: festiveGlow 1.8s ease-in-out infinite alternate;
+}
+@keyframes festiveGlow {
+  from { box-shadow: 0 0 15px rgba(242, 197, 114, 0.4); transform: scale(1); }
+  to { box-shadow: 0 0 32px rgba(242, 197, 114, 0.85); transform: scale(1.03); }
+}
+
+/* Feast Visual Stage */
+.feast-stage {
+  position: relative;
+  min-height: 640px;
+  padding: 28px;
+  border-radius: 24px;
+  border: 1px solid var(--line);
+  background: radial-gradient(circle at 50% 32%, rgba(244, 183, 83, 0.15), transparent 35%),
+              linear-gradient(145deg, rgba(20, 30, 49, 0.96), rgba(6, 12, 23, 0.95));
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+}
+.feast-stage[data-style="dong"] {
+  background: radial-gradient(circle at 50% 32%, rgba(245, 194, 88, 0.18), transparent 38%),
+              linear-gradient(145deg, #221a0f, #090e19 75%);
+}
+.feast-stage[data-style="tre"] {
+  background: radial-gradient(circle at 50% 32%, rgba(184, 134, 11, 0.14), transparent 35%),
+              linear-gradient(145deg, #1c1813, #0b111a 75%);
+}
+.feast-stage[data-style="son-mai"] {
+  background: radial-gradient(circle at 50% 32%, rgba(230, 126, 34, 0.18), transparent 38%),
+              linear-gradient(145deg, #300c14, #0a0e18 75%);
+}
+.feast-moon-glow {
+  position: absolute;
+  width: 320px;
+  height: 320px;
+  border-radius: 50%;
+  left: 50%;
+  top: 30%;
+  transform: translate(-50%, -50%);
+  background: #f1c40f;
+  opacity: 0.08;
+  filter: blur(28px);
+  pointer-events: none;
+}
+
+/* Progress */
+.feast-progress-wrap {
+  max-width: 520px;
+  margin: 0 auto 20px;
+  text-align: center;
+  position: relative;
+  z-index: 2;
+}
+.feast-progress-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: #eeddc6;
+  margin-bottom: 7px;
+  font-weight: 500;
+}
+.feast-progress-bar-bg {
+  height: 8px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+.feast-progress-bar-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 12px;
+  background: linear-gradient(90deg, #c98832, #f5d075, #ffd97d);
+  transition: width 0.6s ease;
+  box-shadow: 0 0 12px rgba(245, 208, 117, 0.5);
+}
+.feast-progress-sub {
+  font-size: 11px;
+  color: #b7a998;
+  margin: 8px 0 0;
+}
+
+/* Platter Container */
+.feast-platter-area {
+  position: relative;
+  min-height: 480px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 20px 0;
+}
+.feast-platter {
+  position: relative;
+  width: min(540px, 94%);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, #855a29 0%, #3e2412 55%, #1f1108 72%);
+  border: 12px double #e0ab5b;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 0 45px rgba(230, 160, 60, 0.25);
+  transition: all 0.4s ease;
+}
+.feast-stage[data-style="dong"] .feast-platter {
+  background: radial-gradient(circle, #a17838 0%, #684a1e 52%, #2c1c0a 75%);
+  border: 12px double #f3cc77;
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.55), inset 0 0 50px rgba(247, 214, 137, 0.35);
+}
+.feast-stage[data-style="tre"] .feast-platter {
+  background: radial-gradient(circle, #2d5a27 0%, #1c3b18 40%, #523b20 58%, #271a0d 75%);
+  border: 10px solid #8c5d2b;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 0 35px rgba(50, 100, 40, 0.3);
+}
+.feast-stage[data-style="son-mai"] .feast-platter {
+  background: radial-gradient(circle, #611320 0%, #3b0a12 52%, #190307 75%);
+  border: 12px double #d4af37;
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.55), inset 0 0 50px rgba(212, 175, 55, 0.3);
+}
+
+.feast-center-piece {
+  position: absolute;
+  width: 110px;
+  height: 110px;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, #c98832 0%, #703c14 80%);
+  border: 4px solid #f0cc8a;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 0 25px rgba(240, 204, 138, 0.5);
+  z-index: 2;
+  text-align: center;
+}
+.center-symbol {
+  font-family: serif;
+  font-size: 38px;
+  color: #3b1805;
+  line-height: 1;
+}
+.feast-center-piece small {
+  font-family: 'Charm', cursive;
+  font-size: 13px;
+  color: #fff2db;
+  margin-top: -8px;
+}
+
+/* Platter Items */
+.feast-items-grid {
+  position: absolute;
+  inset: 0;
+}
+.feast-item-node {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  z-index: 3;
+  transition: transform 0.25s ease, filter 0.25s ease;
+}
+.feast-item-node:hover {
+  transform: translate(-50%, -50%) scale(1.18);
+  z-index: 10;
+}
+.feast-item-node.highlighted {
+  z-index: 20;
+  animation: nodeHighlight 1.5s ease-in-out infinite alternate;
+}
+@keyframes nodeHighlight {
+  from { transform: translate(-50%, -50%) scale(1.25); filter: drop-shadow(0 0 16px #f1c40f); }
+  to { transform: translate(-50%, -50%) scale(1.35); filter: drop-shadow(0 0 28px #fff1b8); }
+}
+.item-badge {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(255, 245, 225, 0.95), rgba(243, 204, 137, 0.9));
+  border: 2px solid #ecd39d;
+  display: grid;
+  place-items: center;
+  font-size: 22px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+  transition: all 0.25s;
+}
+.feast-item-node.sealed .item-badge::after {
+  content: '✦';
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 16px;
+  height: 16px;
+  background: #c0392b;
+  border: 1px solid #ffcc66;
+  border-radius: 50%;
+  color: #fffae6;
+  font-size: 9px;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
+}
+.item-tag {
+  margin-top: 4px;
+  padding: 2px 7px;
+  border-radius: 8px;
+  background: rgba(14, 23, 38, 0.88);
+  border: 1px solid rgba(216, 184, 121, 0.3);
+  color: #f7e6cf;
+  font-size: 9px;
+  white-space: nowrap;
+  max-width: 72px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.item-tag.mine-tag {
+  border-color: var(--gold);
+  color: var(--gold);
+  background: rgba(242, 197, 114, 0.18);
+}
+
+/* Celebration banner */
+.feast-celebration-banner {
+  margin-top: 24px;
+  text-align: center;
+  padding: 24px;
+  border-radius: 18px;
+  background: linear-gradient(145deg, rgba(180, 40, 40, 0.4), rgba(40, 20, 25, 0.6));
+  border: 2px solid #f1c40f;
+  box-shadow: 0 0 35px rgba(241, 196, 15, 0.35);
+  animation: bannerGlow 2s ease-in-out infinite alternate;
+}
+@keyframes bannerGlow {
+  from { box-shadow: 0 0 25px rgba(241, 196, 15, 0.25); }
+  to { box-shadow: 0 0 45px rgba(241, 196, 15, 0.6); }
+}
+.lion-dance-art {
+  font-size: 24px;
+  color: var(--gold);
+  letter-spacing: 6px;
+}
+.feast-celebration-banner h2 {
+  font-size: 30px;
+  color: #fff1c6;
+  margin: 8px 0;
+}
+.feast-celebration-banner p {
+  color: #ead6bf;
+  font-size: 14px;
+  max-width: 580px;
+  margin: 0 auto;
+}
+
+/* Contributor Wall */
+.feast-wall-section {
+  margin-top: 48px;
+}
+.feast-wall-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.feast-wall-toolbar input {
+  max-width: 320px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: rgba(4, 10, 20, 0.7);
+  color: #fff2db;
+  font-size: 12px;
+}
+.feast-wall-count {
+  font-size: 12px;
+  color: #c9b9a6;
+}
+.feast-contributors-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+.feast-contributor-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(14, 24, 40, 0.75);
+  cursor: pointer;
+  transition: all 0.22s ease;
+}
+.feast-contributor-card:hover {
+  border-color: var(--gold);
+  background: rgba(242, 197, 114, 0.08);
+  transform: translateY(-2px);
+}
+.feast-contributor-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 20px;
+  background: rgba(242, 197, 114, 0.12);
+  border: 1px solid rgba(242, 197, 114, 0.25);
+  flex: none;
+}
+.feast-contributor-meta {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}
+.feast-contributor-meta b {
+  font-size: 12px;
+  color: #fcebd2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.feast-contributor-meta small {
+  font-size: 10px;
+  color: #a79a8d;
+  margin-top: 2px;
+}
+.feast-contributor-badge {
+  font-size: 9px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: rgba(192, 57, 43, 0.3);
+  border: 1px solid rgba(192, 57, 43, 0.5);
+  color: #f7b2a6;
+  white-space: nowrap;
+}
+.feast-contributor-badge.unsealed {
+  background: rgba(39, 174, 96, 0.3);
+  border-color: rgba(39, 174, 96, 0.5);
+  color: #a3e4d7;
+}
+
+/* Modal inspect & Lucky draw styles */
+.feast-dialog {
+  max-width: 540px;
+}
+.inspect-card {
+  margin-top: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.inspect-sender-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.inspect-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 28px;
+  background: rgba(242, 197, 114, 0.15);
+  border: 2px solid var(--gold);
+}
+.inspect-sender-row b {
+  font-size: 16px;
+  color: #fcebd2;
+  display: block;
+}
+.inspect-sender-row small {
+  font-size: 11px;
+  color: #a79a8d;
+}
+
+/* Sealed envelope style */
+.inspect-sealed-box {
+  padding: 24px;
+  border-radius: 14px;
+  background: linear-gradient(145deg, #201217, #0e121d);
+  border: 2px dashed rgba(216, 184, 121, 0.4);
+  text-align: center;
+}
+.seal-mark {
+  display: inline-block;
+  font-size: 11px;
+  letter-spacing: 2px;
+  font-weight: 600;
+  color: #e74c3c;
+  background: rgba(192, 57, 43, 0.2);
+  border: 1px solid rgba(192, 57, 43, 0.5);
+  padding: 4px 12px;
+  border-radius: 12px;
+  margin-bottom: 12px;
+}
+.inspect-sealed-box p {
+  color: #fce4c4;
+  margin: 0 0 6px;
+}
+.inspect-sealed-box small {
+  color: #ad9e8e;
+  font-size: 11px;
+}
+
+/* Unsealed parchment style */
+.inspect-unsealed-box {
+  padding: 22px;
+  border-radius: 14px;
+  background: linear-gradient(145deg, #f8ead4, #decab0);
+  color: #3b2c21;
+  text-align: center;
+  border: 1px solid #d4b895;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+}
+.unseal-mark {
+  display: block;
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  font-weight: 600;
+  color: #a36c24;
+  margin-bottom: 10px;
+}
+.inspect-unsealed-box blockquote {
+  font-family: 'Charm', cursive;
+  font-size: 20px;
+  line-height: 1.6;
+  margin: 0 0 14px;
+}
+.inspect-thank-row {
+  display: flex;
+  justify-content: center;
+}
+.inspect-thanked-note {
+  font-size: 11px;
+  color: #27ae60;
+  font-weight: 600;
+  margin: 8px 0 0;
+}
+
+/* Lucky draw dialog */
+.lucky-result-wrap {
+  text-align: center;
+  margin-top: 14px;
+}
+.lucky-gift-icon {
+  font-size: 54px;
+  animation: giftBounce 1.2s ease-in-out infinite alternate;
+}
+@keyframes giftBounce {
+  from { transform: translateY(0); }
+  to { transform: translateY(-8px) scale(1.08); }
+}
+.lucky-announcement {
+  font-size: 15px;
+  color: #eedcc5;
+  margin: 10px 0 18px;
+}
+.lucky-announcement b {
+  color: var(--gold);
+}
+.lucky-wish-paper {
+  text-align: center;
+  background: linear-gradient(145deg, #f9efe0, #e0cbaf);
+  color: #3f2f22;
+  border: 1px solid #d4b895;
+  padding: 20px;
+  border-radius: 14px;
+  margin: 12px 0;
+}
+.paper-kicker {
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  color: #a36c24;
+  font-weight: 600;
+  margin: 0 0 8px;
+}
+.lucky-wish-paper blockquote {
+  font-family: 'Charm', cursive;
+  font-size: 20px;
+  line-height: 1.6;
+  margin: 0 0 10px;
+}
+.paper-signer {
+  font-size: 12px;
+  color: #6d4f32;
+  font-weight: 600;
+  margin: 0;
+}
+
+/* Preview mini feast stage */
+.mini-feast-stage {
+  width: 270px;
+  height: 270px;
+  margin: 10px auto 18px;
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+.mini-feast-platter {
+  width: 230px;
+  height: 230px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #855a29 0%, #3e2412 55%, #1f1108 72%);
+  border: 8px double #e0ab5b;
+  position: relative;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 10px 25px rgba(0,0,0,.45);
+}
+.mini-feast-center {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: #c98832;
+  border: 2px solid #f0cc8a;
+  display: grid;
+  place-items: center;
+  color: #2b1103;
+  font-size: 20px;
+}
+.mini-feast-items {
+  position: absolute;
+  inset: 0;
+}
+.mini-item {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(255, 245, 225, 0.95);
+  border: 1px solid #d4b895;
+  display: grid;
+  place-items: center;
+  font-size: 14px;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 3px 8px rgba(0,0,0,.3);
+}
+.mini-item.item-cho-buoi { left: 50px; top: 75px; }
+.mini-item.item-den-ong-sao { right: 25px; top: 75px; }
+.mini-item.item-nai-chuoi { left: 75px; bottom: 25px; }
+.mini-item.item-com-sen { right: 45px; bottom: 25px; }
+.mini-item.item-banh-nuong { left: 50%; top: 25px; }
+
+@media(max-width: 600px) {
+  .feast-stage {
+    min-height: 480px;
+    padding: 16px 12px;
+  }
+  .feast-platter {
+    width: 100%;
+  }
+  .item-badge {
+    width: 36px;
+    height: 36px;
+    font-size: 18px;
+  }
+  .item-tag {
+    font-size: 8px;
+    max-width: 55px;
+  }
+  .feast-action-bar {
+    padding: 16px;
+  }
+  .feast-quote {
+    font-size: 17px;
+  }
+}
+
+/* =========================================================
    PRIVATE GREETING CARDS (create-card.html & card.html)
    ========================================================= */
 .card-creation-grid {
