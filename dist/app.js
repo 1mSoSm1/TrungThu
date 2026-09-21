@@ -89,55 +89,28 @@ function initLiveSync() {
       })
       .catch(() => {});
 
-    fetch(`${FIREBASE_DB_URL}/wishes.json`)
-      .then(res => res.json())
-      .then(data => {
-        if (data && typeof data === 'object') {
-          handleRemoteWishes(data);
-        }
-      })
-      .catch(() => {});
+    syncRemoteWishes();
 
-    if (window.EventSource) {
-      const source = new EventSource(`${FIREBASE_DB_URL}/wishes.json`);
-      source.addEventListener('put', e => {
-        try {
-          const parsed = JSON.parse(e.data);
-          if (parsed.path === '/' && parsed.data) {
-            handleRemoteWishes(parsed.data);
-          } else if (parsed.path && parsed.path.startsWith('/')) {
-            const parts = parsed.path.replace(/^\//, '').split('/');
-            const key = parts[0];
-            const sub = parts[1];
-            if (key) {
-              const idx = communityWishes.findIndex(w => w.id === key);
-              if (sub === 'likesCount' && idx >= 0) {
-                communityWishes[idx].likesCount = typeof parsed.data === 'number' ? parsed.data : 0;
-              } else if (sub === 'picksCount' && idx >= 0) {
-                communityWishes[idx].picksCount = typeof parsed.data === 'number' ? parsed.data : 0;
-              } else if (!sub) {
-                if (parsed.data) {
-                  const item = {
-                    ...parsed.data,
-                    id: key,
-                    likesCount: typeof parsed.data.likesCount === 'number' ? parsed.data.likesCount : 0,
-                    picksCount: typeof parsed.data.picksCount === 'number' ? parsed.data.picksCount : 0
-                  };
-                  if (idx >= 0) communityWishes[idx] = item;
-                  else communityWishes.unshift(item);
-                } else {
-                  communityWishes = communityWishes.filter(w => w.id !== key);
-                }
-              }
-              render();
-            }
-          }
-        } catch {}
-      });
-    }
+    // Polling nhẹ nhàng 10 giây/lần qua HTTP REST (không giữ kết nối liên tục)
+    if (wishesPollingTimer) clearInterval(wishesPollingTimer);
+    wishesPollingTimer = setInterval(syncRemoteWishes, 10000);
   } catch (err) {
     console.warn('Live sync fallback:', err);
   }
+}
+
+let wishesPollingTimer = null;
+async function syncRemoteWishes() {
+  if (document.hidden) return;
+  try {
+    const res = await fetch(`${FIREBASE_DB_URL}/wishes.json`);
+    if (res.ok) {
+      const data = await res.json();
+      if (data && typeof data === 'object') {
+        handleRemoteWishes(data);
+      }
+    }
+  } catch {}
 }
 
 function handleRemoteWishes(data) {
@@ -1856,7 +1829,7 @@ function revealLetter() {
 
 /* Bánh Trăng Đoàn Viên */
 let lastReunionBox = null;
-let reunionStream = null;
+let reunionPollingTimer = null;
 
 async function rememberReunion(id, role) {
   const response = await fetch(`${FIREBASE_DB_URL}/reunion_members/${state.visitorId}/${id}.json`, {
@@ -2163,12 +2136,12 @@ async function initReunionPage() {
   try {
     const result = await getReunionBox(id); if (!result?.box) throw new Error('not-found');
     renderReunionBox(result.box);
-    if (reunionStream) reunionStream.close();
-    if (window.EventSource) {
-      reunionStream = new EventSource(`${FIREBASE_DB_URL}/reunion_boxes/${encodeURIComponent(id)}.json`);
-      const refresh = async () => { const latest = await getReunionBox(id); if (latest?.box) renderReunionBox(latest.box); };
-      reunionStream.addEventListener('put', refresh); reunionStream.addEventListener('patch', refresh);
-    }
+    if (reunionPollingTimer) clearInterval(reunionPollingTimer);
+    reunionPollingTimer = setInterval(async () => {
+      if (document.hidden) return;
+      const latest = await getReunionBox(id);
+      if (latest?.box) renderReunionBox(latest.box);
+    }, 10000);
     $('#reunion-join-form').onsubmit = async e => {
       e.preventDefault(); const btn = $('#reunion-join-button'); btn.disabled = true;
       try {
@@ -2229,7 +2202,7 @@ function renderFeastArt(element, meta) {
   element.appendChild(image);
 }
 
-let feastStream = null;
+let feastPollingTimer = null;
 let currentFeastBox = null;
 
 async function rememberFeast(id, role = 'contributor') {
@@ -2772,16 +2745,12 @@ async function initFeastPage() {
     if (!result?.box) throw new Error('not-found');
     renderFeastPage(result.box);
 
-    if (feastStream) feastStream.close();
-    if (window.EventSource) {
-      feastStream = new EventSource(`${FIREBASE_DB_URL}/feast_boxes/${encodeURIComponent(id)}.json`);
-      const refresh = async () => {
-        const latest = await getFeastBox(id);
-        if (latest?.box) renderFeastPage(latest.box);
-      };
-      feastStream.addEventListener('put', refresh);
-      feastStream.addEventListener('patch', refresh);
-    }
+    if (feastPollingTimer) clearInterval(feastPollingTimer);
+    feastPollingTimer = setInterval(async () => {
+      if (document.hidden) return;
+      const latest = await getFeastBox(id);
+      if (latest?.box) renderFeastPage(latest.box);
+    }, 10000);
 
     // Search filter input
     $('#feast-search-input')?.addEventListener('input', () => {
@@ -2949,8 +2918,8 @@ function initPage() {
     renderFeastShelf();
   }
 
-  if (page !== 'reunion' && reunionStream) { reunionStream.close(); reunionStream = null; }
-  if (page !== 'feast' && feastStream) { feastStream.close(); feastStream = null; }
+  if (page !== 'reunion' && reunionPollingTimer) { clearInterval(reunionPollingTimer); reunionPollingTimer = null; }
+  if (page !== 'feast' && feastPollingTimer) { clearInterval(feastPollingTimer); feastPollingTimer = null; }
 
   if (!state.name && page !== 'card' && page !== 'reunion' && page !== 'feast') {
     const welcome = $('#welcome');
@@ -2958,9 +2927,19 @@ function initPage() {
   }
 }
 
-// Initial Boot
+// Initial Boot & Smart Disconnect on Tab Sleep
 document.addEventListener('visibilitychange', () => {
   document.body.classList.toggle('paused-motion', document.hidden);
+  if (!document.hidden) {
+    syncRemoteWishes();
+    const id = new URLSearchParams(location.search).get('id');
+    const page = document.body.dataset.page;
+    if (page === 'feast' && id) {
+      getFeastBox(id).then(res => { if (res?.box) renderFeastPage(res.box); });
+    } else if (page === 'reunion' && id) {
+      getReunionBox(id).then(res => { if (res?.box) renderReunionBox(res.box); });
+    }
+  }
 });
 
 function initAutoMusic() {
