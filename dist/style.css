@@ -270,12 +270,14 @@ main {
 }
 
 .eyebrow {
-  font-size: 11px;
-  letter-spacing: 2.8px;
-  color: #d4b782;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 2.5px;
+  color: #deb97a;
   line-height: 1.6;
   text-transform: uppercase;
   display: inline-block;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.65);
 }
 
 .section {
@@ -387,9 +389,23 @@ main {
 
 .hero-content {
   position: relative;
-  z-index: 2;
+  z-index: 4;
   max-width: 520px;
   padding: 30px 0;
+}
+
+.hero .eyebrow {
+  font-weight: 700;
+  color: #ffe0a3;
+  padding: 4px 14px;
+  border-radius: 20px;
+  background: rgba(8, 15, 29, 0.55);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(242, 197, 114, 0.35);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.95), 0 0 10px rgba(0, 0, 0, 0.8);
+  margin-bottom: 6px;
 }
 
 .hello {
@@ -434,7 +450,7 @@ h1 {
   margin: 10px auto clamp(25px, 4vh, 45px);
   padding: 0 clamp(16px, 4vw, 30px);
   position: relative;
-  z-index: 2;
+  z-index: 4;
 }
 
 .quick-actions {
@@ -1077,6 +1093,8 @@ h1 {
   padding: 20px;
   align-items: flex-start;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  position: relative;
+  z-index: 4;
 }
 
 .avatar {
@@ -1121,6 +1139,8 @@ h1 {
   border-radius: 16px;
   padding: clamp(20px, 4vw, 32px);
   box-shadow: 0 8px 35px rgba(0, 0, 0, 0.2);
+  position: relative;
+  z-index: 4;
 }
 
 .profile-card h3 {
@@ -1393,7 +1413,7 @@ dialog[open] {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  z-index: 3;
+  z-index: 2;
   overflow: hidden;
 }
 
@@ -1406,7 +1426,8 @@ dialog[open] {
   opacity: 0;
   animation: lantern-rise var(--duration) linear infinite;
   animation-delay: var(--delay);
-  filter: blur(0.2px) drop-shadow(0 0 10px rgba(255, 156, 61, 0.45));
+  filter: drop-shadow(0 0 8px rgba(255, 160, 60, 0.45));
+  will-change: transform, opacity;
 }
 
 .star {
@@ -1592,7 +1613,7 @@ dialog[open] {
     padding: 20px 0;
   }
   .hero-shade {
-    background: linear-gradient(0deg, #080f1d 0%, rgba(8, 15, 29, 0.88) 35%, rgba(8, 15, 29, 0.2) 75%);
+    background: linear-gradient(0deg, #080f1d 0%, rgba(8, 15, 29, 0.92) 40%, rgba(8, 15, 29, 0.6) 75%, rgba(8, 15, 29, 0.3) 100%);
   }
   .wish-list {
     grid-template-columns: 1fr;
@@ -3006,6 +3027,7 @@ dialog[open] {
 /* Enhanced Wish Card Structure */
 .wish-card {
   position: relative;
+  z-index: 4;
   flex-direction: column !important;
   align-items: stretch !important;
 }

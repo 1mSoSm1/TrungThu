@@ -189,7 +189,57 @@ const defaultBlessings = [
   'Mong những ngày sắp tới, bạn luôn gặp được những người tốt, những cơ hội tốt và đủ dũng cảm để theo đuổi điều mình muốn.',
   'Chúc bạn một mùa trăng tròn đầy, đủ bình an để nghỉ ngơi và đủ niềm tin để bắt đầu những điều mới.',
   'Dù hôm nay có bận rộn đến đâu, mong bạn vẫn tìm được một khoảng bình yên để ngắm trăng và mỉm cười.',
-  'Đừng quên rằng bạn đang làm rất tốt rồi. Cứ chậm rãi bước đi, những điều tốt đẹp đang đợi bạn ở phía trước.'
+  'Đừng quên rằng bạn đang làm rất tốt rồi. Cứ chậm rãi bước đi, những điều tốt đẹp đang đợi bạn ở phía trước.',
+
+  // Sức khỏe
+  'Mong bạn luôn có thật nhiều sức khỏe, ăn ngon, ngủ ngon và mỗi ngày thức dậy đều cảm thấy nhẹ nhàng hơn hôm qua.',
+  'Chúc bạn và những người bạn yêu thương luôn mạnh khỏe, bình an và có thật nhiều thời gian ở bên nhau.',
+  'Mong những mệt mỏi rồi sẽ qua đi, sức khỏe ngày một tốt hơn và nụ cười luôn ở lại trên môi bạn.',
+  'Chúc bạn có một cơ thể khỏe mạnh, một trái tim an yên và một tinh thần đủ vững vàng để đi qua mọi ngày khó khăn.',
+  'Mong bạn biết chăm sóc bản thân nhiều hơn một chút, ngủ sớm hơn một chút và yêu thương chính mình nhiều hơn thật nhiều.',
+
+  // Gia đình
+  'Mong gia đình bạn luôn đầy ắp tiếng cười, bữa cơm luôn có người chờ và mỗi lần trở về đều cảm thấy thật bình yên.',
+  'Chúc những người thân yêu của bạn luôn khỏe mạnh, hạnh phúc và cùng nhau đón thêm thật nhiều mùa trăng đoàn viên.',
+  'Mong dù cuộc sống có đưa mỗi người đi xa đến đâu, gia đình vẫn luôn là nơi ấm áp nhất để bạn trở về.',
+  'Chúc mái nhà của bạn luôn có tiếng nói cười, có sự sẻ chia và có những người thật lòng thương nhau.',
+  'Mong những điều tốt đẹp nhất sẽ đến với gia đình bạn, không chỉ trong đêm Trung Thu mà trong tất cả những ngày sau đó.',
+
+  // Tình cảm
+  'Mong bạn gặp được một người thật lòng thương bạn, trân trọng những điều nhỏ bé và luôn muốn cùng bạn đi thật lâu.',
+  'Nếu bạn đang yêu, mong hai người sẽ càng hiểu và thương nhau hơn. Nếu bạn đang một mình, mong đúng người sẽ đến vào đúng lúc.',
+  'Mong tình cảm bạn trao đi luôn được đáp lại bằng sự chân thành, dịu dàng và tử tế.',
+  'Chúc bạn không phải chạy theo một người không thuộc về mình, mà sẽ gặp được người sẵn sàng bước về phía bạn.',
+  'Mong người bạn nhớ đến khi ngắm trăng đêm nay cũng đang nhớ đến bạn bằng một cách thật dịu dàng.',
+  'Chúc bạn luôn được yêu theo cách khiến bạn cảm thấy an tâm, được là chính mình và không phải nghi ngờ giá trị của bản thân.',
+
+  // Công việc - học tập
+  'Mong những cố gắng âm thầm của bạn rồi sẽ được nhìn thấy, được công nhận và mang lại kết quả xứng đáng.',
+  'Chúc công việc của bạn ngày càng thuận lợi, gặp được đồng đội tốt và có nhiều cơ hội để phát triển hơn.',
+  'Mong những mục tiêu bạn đang theo đuổi từng bước trở thành hiện thực, dù nhanh hay chậm thì bạn vẫn luôn tiến về phía trước.',
+  'Chúc bạn học đâu nhớ đó, thi đâu qua đó và những đêm thức khuya rồi sẽ đổi lại bằng kết quả khiến bạn mỉm cười.',
+  'Mong bạn luôn giữ được sự tò mò, nhiệt huyết và đủ kiên trì để đi đến nơi mình từng mơ ước.',
+
+  // Bình an - cuộc sống
+  'Mong cuộc sống đối xử với bạn thật dịu dàng, và khi không dịu dàng, mong bạn vẫn đủ mạnh mẽ để bước tiếp.',
+  'Chúc bạn có những ngày bình thường nhưng hạnh phúc, những bữa ăn ngon, những giấc ngủ sâu và những người đáng quý bên cạnh.',
+  'Mong bạn thôi lo lắng về những điều chưa xảy ra và học cách tận hưởng những điều tốt đẹp đang có ở hiện tại.',
+  'Chúc bạn luôn tìm được ánh sáng ngay cả trong những ngày tối nhất, giống như mặt trăng vẫn luôn sáng giữa bầu trời đêm.',
+  'Mong mỗi ngày của bạn đều có ít nhất một điều nhỏ bé khiến bạn cảm thấy cuộc sống này thật đáng yêu.',
+
+  // May mắn - tài lộc
+  'Chúc bạn đi đâu cũng gặp may, làm gì cũng thuận lợi, tiền vào đều đều và những dự định đều tiến triển tốt đẹp.',
+  'Mong ví của bạn ngày càng dày, công việc ngày càng ổn và những món đồ bạn thích đều mua được mà không cần nhìn giá quá lâu.',
+  'Chúc những cơ hội tốt tìm đến bạn nhiều hơn, những cánh cửa phù hợp mở ra và những lựa chọn của bạn đều dẫn tới điều tốt đẹp.',
+  'Mong vận may ghé thăm bạn không chỉ trong đêm Trung Thu này mà còn ở thật nhiều ngày sau nữa.',
+  'Chúc bạn có đủ tiền để mua những thứ mình thích, đủ thời gian để làm những điều mình yêu và đủ người tốt để cùng sẻ chia.',
+
+  // Một chút cảm xúc
+  'Mong bạn không phải trưởng thành quá vội. Thỉnh thoảng hãy cho phép mình nghỉ ngơi, ngắm trăng và làm một đứa trẻ thêm một chút.',
+  'Nếu gần đây bạn đã trải qua những ngày không vui, mong đêm trăng này sẽ là dấu chấm hết cho những điều buồn và mở đầu cho những ngày tốt đẹp hơn.',
+  'Mong những điều bạn từng âm thầm ước dưới ánh trăng một ngày nào đó sẽ thật sự trở thành hiện thực.',
+  'Chúc bạn sau tất cả vẫn giữ được một trái tim ấm áp, vẫn tin vào những điều tử tế và vẫn sẵn lòng yêu thương.',
+  'Mong một ngày khi nhìn lại, bạn sẽ nhận ra những ngày khó khăn hôm nay đã đưa mình đến một nơi thật đẹp.'
 ];
 
 /* Live Cloud Sync (Firebase Realtime Database) */
