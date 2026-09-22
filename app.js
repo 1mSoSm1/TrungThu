@@ -4,6 +4,36 @@ const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAl
 const KEY = 'moonwish-v1';
 const FIREBASE_DB_URL = 'https://trung-thu-1dc8f-default-rtdb.asia-southeast1.firebasedatabase.app';
 
+// Helper fetch chống cache triệt để: luôn gắn timestamp và no-store
+function fetchFresh(url, options = {}) {
+  try {
+    const u = new URL(url, location.href);
+    u.searchParams.set('_nocache', Date.now());
+    return fetch(u.toString(), {
+      ...options,
+      cache: 'no-store',
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        ...(options.headers || {})
+      }
+    });
+  } catch {
+    return fetch(url, { ...options, cache: 'no-store' });
+  }
+}
+
+// Hàm hỗ trợ xóa sạch dữ liệu máy để kiểm thử
+window.resetMidAutumnState = function() {
+  try {
+    localStorage.removeItem(KEY);
+    localStorage.removeItem('moonwish-claim-cache');
+    localStorage.removeItem('moonwish-community-cache');
+    sessionStorage.clear();
+  } catch {}
+  location.reload();
+};
+
 let state = {
   visitorId: '',
   deviceId: '',
@@ -250,52 +280,58 @@ function initLiveSync() {
 
       // 1. Đồng bộ người dùng thiết bị vật lý trên Firebase
       try {
-        const devUserRes = await fetch(`${FIREBASE_DB_URL}/device_users/${devId}.json`);
+        const devUserRes = await fetchFresh(`${FIREBASE_DB_URL}/device_users/${devId}.json`);
         if (devUserRes.ok) {
           const linkedVisitorId = await devUserRes.json();
           if (linkedVisitorId && typeof linkedVisitorId === 'string') {
             state.visitorId = linkedVisitorId;
             save();
-          } else if (state.visitorId) {
-            fetch(`${FIREBASE_DB_URL}/device_users/${devId}.json`, {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(state.visitorId)
-            }).catch(() => {});
           }
         }
       } catch (_) {}
 
       // 2. Khóa thiết bị: Kiểm tra xem thiết bị này đã từng bốc quà chưa (kể cả trên trình duyệt khác)
+      let foundRemoteClaim = false;
       try {
-        const devClaimRes = await fetch(`${FIREBASE_DB_URL}/device_claims/${devId}.json`);
+        const devClaimRes = await fetchFresh(`${FIREBASE_DB_URL}/device_claims/${devId}.json`);
         if (devClaimRes.ok) {
           const devClaim = await devClaimRes.json();
           if (devClaim && devClaim.content) {
             saveClaim(devClaim);
             render();
+            foundRemoteClaim = true;
             return state.claim;
           }
         }
       } catch (_) {}
 
       // 3. Fallback theo visitorId nếu có
-      try {
-        const res = await fetch(`${FIREBASE_DB_URL}/claims/${state.visitorId}.json`);
-        if (res.ok) {
-          const claim = await res.json();
-          if (claim && claim.content) {
-            saveClaim(claim);
-            render();
-            fetch(`${FIREBASE_DB_URL}/device_claims/${devId}.json`, {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ ...claim, deviceId: devId })
-            }).catch(() => {});
-            return state.claim;
+      if (!foundRemoteClaim) {
+        try {
+          const res = await fetchFresh(`${FIREBASE_DB_URL}/claims/${state.visitorId}.json`);
+          if (res.ok) {
+            const claim = await res.json();
+            if (claim && claim.content) {
+              saveClaim(claim);
+              render();
+              foundRemoteClaim = true;
+              fetch(`${FIREBASE_DB_URL}/device_claims/${devId}.json`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...claim, deviceId: devId })
+              }).catch(() => {});
+              return state.claim;
+            }
           }
-        }
-      } catch (_) {}
+        } catch (_) {}
+      }
+
+      // NẾU CẢ HAI ĐỀU TRẢ VỀ NULL TRÊN FIREBASE (DB BỊ XÓA HOẶC CHƯA BỐC QUÀ):
+      // -> Tự động xóa sạch claim cache cũ trên localStorage để không bị lưu quà cũ!
+      if (!foundRemoteClaim) {
+        saveClaim(null);
+        render();
+      }
 
       return state.claim;
     })().catch(() => {});
@@ -314,19 +350,18 @@ let wishesPollingTimer = null;
 async function syncRemoteWishes() {
   if (document.hidden) return;
   try {
-    const res = await fetch(`${FIREBASE_DB_URL}/wishes.json`);
+    const res = await fetchFresh(`${FIREBASE_DB_URL}/wishes.json`);
     if (res.ok) {
       const data = await res.json();
-      if (data && typeof data === 'object') {
-        handleRemoteWishes(data);
-      }
+      handleRemoteWishes(data);
     }
   } catch {}
 }
 
 function handleRemoteWishes(data) {
   remoteWishesLoaded = true;
-  communityWishes = Object.entries(data)
+  const wishMap = (data && typeof data === 'object') ? data : {};
+  communityWishes = Object.entries(wishMap)
     .filter(([_, val]) => val && val.content)
     .map(([id, val]) => ({
       ...val,
@@ -337,14 +372,21 @@ function handleRemoteWishes(data) {
     .sort((a, b) => new Date(b.created || 0) - new Date(a.created || 0));
 
   try {
-    localStorage.setItem(COMMUNITY_WISHES_KEY, JSON.stringify(communityWishes.slice(0, 60)));
+    if (communityWishes.length > 0) {
+      localStorage.setItem(COMMUNITY_WISHES_KEY, JSON.stringify(communityWishes.slice(0, 60)));
+    } else {
+      localStorage.removeItem(COMMUNITY_WISHES_KEY);
+    }
   } catch {}
 
   const myRemoteWish = communityWishes.find(w => w.id === state.visitorId);
   if (myRemoteWish) {
     state.wishes = [myRemoteWish];
-    save();
+  } else {
+    // Nếu trên Firebase đã bị xóa (DB reset), làm sạch state.wishes trên máy!
+    state.wishes = [];
   }
+  save();
   render();
 }
 
@@ -1088,7 +1130,7 @@ async function openGift() {
 
   // Kiểm tra trực tiếp trên Firebase xem thiết bị vật lý này đã mở quà ở trình duyệt khác chưa
   try {
-    const devCheck = await fetch(`${FIREBASE_DB_URL}/device_claims/${devId}.json`);
+    const devCheck = await fetchFresh(`${FIREBASE_DB_URL}/device_claims/${devId}.json`);
     const devClaim = devCheck.ok ? await devCheck.json() : null;
     if (devClaim && devClaim.content) {
       saveClaim(devClaim);
@@ -1120,23 +1162,24 @@ async function openGift() {
     } else if (liveWishes.length > 0) {
       picked = liveWishes[Math.floor(Math.random() * liveWishes.length)];
     } else {
-      // Fallback chỉ khi hoàn toàn chưa có ai gửi lời chúc nào
-      const text = defaultBlessings[Math.floor(Math.random() * defaultBlessings.length)];
-      picked = { content: text, name: 'Một người bạn dưới ánh trăng ☾', lanternType: 'ong-sao' };
+      // Fallback nếu hòm thư cộng đồng chưa có lời chúc nào
+      picked = {
+        id: 'system_' + Math.floor(Math.random() * defaultBlessings.length),
+        content: defaultBlessings[Math.floor(Math.random() * defaultBlessings.length)],
+        name: 'Trăng Rằm',
+        anonymous: false
+      };
     }
 
     const claim = {
-      content: picked.content,
-      name: picked.anonymous ? 'Một người bạn' : (picked.name || 'Một người bạn'),
-      lanternType: picked.lanternType || 'ong-sao',
-      sourceWishId: picked.id || '',
-      visitorId: state.visitorId,
-      deviceId: devId,
-      created: new Date().toISOString()
+      ...picked,
+      claimedAt: Date.now()
     };
+
+    // Khóa món quà trên Firebase theo cả visitorId và deviceId vật lý
     const claimPath = `${FIREBASE_DB_URL}/claims/${state.visitorId}.json`;
     const devClaimPath = `${FIREBASE_DB_URL}/device_claims/${devId}.json`;
-    const claimCheck = await fetch(claimPath, { headers: { 'X-Firebase-ETag': 'true' } });
+    const claimCheck = await fetchFresh(claimPath, { headers: { 'X-Firebase-ETag': 'true' } });
     const existingClaim = claimCheck.ok ? await claimCheck.json() : null;
     if (existingClaim?.content) {
       saveClaim(existingClaim);
@@ -1664,6 +1707,16 @@ async function navigateTo(url, replaceState = false) {
 }
 
 function handleQueryParams(params) {
+  if (params.get('reset') === '1' || params.get('clear') === '1') {
+    try {
+      localStorage.removeItem(KEY);
+      localStorage.removeItem(CLAIM_CACHE_KEY);
+      localStorage.removeItem(COMMUNITY_WISHES_KEY);
+      sessionStorage.clear();
+    } catch {}
+    location.replace(location.pathname);
+    return;
+  }
   const page = document.body.dataset.page;
   const id = params.get('id');
   if (page === 'gift') {
@@ -1762,7 +1815,7 @@ async function createPrivateCard(data) {
 async function getPrivateCard(cardId) {
   if (!cardId) return null;
   try {
-    const res = await fetch(`${FIREBASE_DB_URL}/private_cards/${cardId}.json`);
+    const res = await fetchFresh(`${FIREBASE_DB_URL}/private_cards/${cardId}.json`);
     if (!res.ok) return null;
     return await res.json();
   } catch {
@@ -2378,7 +2431,7 @@ async function createReunionBox(data) {
 
 async function getReunionBox(id, withEtag = false) {
   if (!id) return null;
-  const response = await fetch(`${FIREBASE_DB_URL}/reunion_boxes/${encodeURIComponent(id)}.json`, {
+  const response = await fetchFresh(`${FIREBASE_DB_URL}/reunion_boxes/${encodeURIComponent(id)}.json`, {
     headers: withEtag ? { 'X-Firebase-ETag': 'true' } : {}
   });
   if (!response.ok) return null;
@@ -2705,7 +2758,7 @@ async function renderReunionShelf() {
   }
   let entries = [];
   try {
-    const response = await fetch(`${FIREBASE_DB_URL}/reunion_members/${state.visitorId}.json`);
+    const response = await fetchFresh(`${FIREBASE_DB_URL}/reunion_members/${state.visitorId}.json`);
     const data = response.ok ? await response.json() : null;
     entries = data ? Object.entries(data).map(([id, value]) => ({ id, ...value })).sort((a, b) => (b.touchedAt || 0) - (a.touchedAt || 0)) : [];
   } catch {}
@@ -2825,7 +2878,7 @@ async function createFeastBox(data) {
 
 async function getFeastBox(id, withEtag = false) {
   if (!id) return null;
-  const response = await fetch(`${FIREBASE_DB_URL}/feast_boxes/${encodeURIComponent(id)}.json`, {
+  const response = await fetchFresh(`${FIREBASE_DB_URL}/feast_boxes/${encodeURIComponent(id)}.json`, {
     headers: withEtag ? { 'X-Firebase-ETag': 'true' } : {}
   });
   if (!response.ok) return null;
@@ -3415,7 +3468,7 @@ async function renderFeastShelf() {
   }
   let entries = [];
   try {
-    const response = await fetch(`${FIREBASE_DB_URL}/feast_members/${state.visitorId}.json`);
+    const response = await fetchFresh(`${FIREBASE_DB_URL}/feast_members/${state.visitorId}.json`);
     const data = response.ok ? await response.json() : null;
     entries = data ? Object.entries(data).map(([id, value]) => ({ id, ...value })).sort((a, b) => (b.touchedAt || 0) - (a.touchedAt || 0)) : [];
   } catch {}
