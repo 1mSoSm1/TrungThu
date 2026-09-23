@@ -5,6 +5,7 @@ const KEY = 'moonwish-v1';
 const FIREBASE_DB_URL = 'https://trung-thu-1dc8f-default-rtdb.asia-southeast1.firebasedatabase.app';
 
 // Helper fetch chống cache triệt để: luôn gắn timestamp và no-store
+// Dùng cho các endpoint quan trọng: claims, device_claims, device_users
 function fetchFresh(url, options = {}) {
   try {
     const u = new URL(url, location.href);
@@ -21,6 +22,15 @@ function fetchFresh(url, options = {}) {
   } catch {
     return fetch(url, { ...options, cache: 'no-store' });
   }
+}
+
+// Helper fetch cho wish list: cho phép trình duyệt cache tối đa 60s
+// Giảm download đáng kể khi poll thường xuyên
+function fetchCached(url, options = {}) {
+  return fetch(url, {
+    ...options,
+    cache: 'default'
+  });
 }
 
 // Hàm hỗ trợ xóa sạch dữ liệu máy để kiểm thử
@@ -1775,7 +1785,7 @@ function initAtmosphere() {
   }
 }
 
-/* FEAST FEATURE DISABLED - All feast-related code has been commented out */
+/* =========================================================
    PRIVATE GREETING CARDS (create-card.html & card.html)
    ========================================================= */
 let currentQrInstance = null;
