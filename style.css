@@ -455,7 +455,7 @@ h1 {
 
 .quick-actions {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 1px;
   background: var(--line);
   border: 1px solid var(--line);
@@ -1520,7 +1520,7 @@ dialog[open] {
     font-size: 13px;
   }
   .quick-actions {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .gift-layout {
     grid-template-columns: 1fr;
