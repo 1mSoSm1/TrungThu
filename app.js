@@ -776,9 +776,7 @@ function render() {
   // Sky lanterns rendering (sky.html)
   const skyContainer = $('#sky-lanterns');
   if (skyContainer) {
-    skyContainer.replaceChildren();
-
-    // Prioritize user's own wish and all community wishes
+    // Tính pool wishes trước để so sánh với lần render trước
     const livePublic = communityWishes.filter(w => w.public && w.content);
     const wishMap = new Map();
     if (state.wishes.length > 0 && state.wishes[0].public) {
@@ -789,145 +787,150 @@ function render() {
         wishMap.set(w.id, { ...w, isUser: w.id === state.visitorId });
       }
     });
-
     const pool = Array.from(wishMap.values());
 
-    if (pool.length === 0) {
-      const emptySky = document.createElement('div');
-      emptySky.className = 'sky-empty';
-      emptySky.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;color:#eed9be;z-index:15;padding:20px;';
-      if (!remoteWishesLoaded) {
-        emptySky.innerHTML = `
-          <p style="margin-bottom:12px;font-family:'Charm',cursive;font-size:26px;color:var(--gold);">☾ Đang thắp sáng những ngọn đèn dưới ánh trăng…</p>
-        `;
-      } else {
-        emptySky.innerHTML = `
-          <p style="font-size:16px;margin-bottom:12px;font-family:'Charm',cursive;font-size:24px;color:var(--gold);">Bầu trời đêm rằm đang đợi ngọn đèn đầu tiên…</p>
-          <a href="write.html" class="gold" style="font-size:13px;padding:10px 22px;display:inline-block;">Thả ngọn đèn đầu tiên lên trời ✧</a>
-        `;
-      }
-      skyContainer.append(emptySky);
+    // Chỉ render lại khi pool thực sự thay đổi (so sánh key = danh sách IDs)
+    // Tránh destroy đèn đang bay giữa chừng mỗi khi render() được gọi do polling
+    const newPoolKey = pool.map(w => w.id).join(',');
+    const oldPoolKey = skyContainer.dataset.poolKey || '';
+    if (newPoolKey === oldPoolKey && skyContainer.children.length > 0) {
+      // Pool không đổi, đèn đang bay bình thường — bỏ qua, không render lại
     } else {
-      const targetCount = Math.min(pool.length, matchMedia('(max-width: 600px)').matches ? 8 : 14);
-      const lanes = [5, 19, 33, 48, 63, 78, 92, 12, 26, 41, 56, 70, 84, 96];
-      const durations = [31, 39, 35, 42, 33, 38, 44, 36, 41, 32, 45, 37, 34, 40];
-      const depths = ['depth-mid', 'depth-near', 'depth-far', 'depth-mid', 'depth-near', 'depth-mid', 'depth-far'];
-      let nextIndex = 0;
+      skyContainer.dataset.poolKey = newPoolKey;
+      skyContainer.replaceChildren();
 
-      function assignWish(button) {
-        const w = pool[nextIndex % pool.length];
-        nextIndex++;
-        const type = normalizeLanternType(w.lanternType);
-        button.classList.remove(...lanternTypes, 'user-wish');
-        button.classList.add(type);
-        if (w.isUser) button.classList.add('user-wish');
-        const icon = button.querySelector('img');
-        if (icon) {
-          icon.onerror = () => { icon.onerror = null; icon.src = getLanternAsset(type, 'png'); };
-          icon.src = getLanternAsset(type);
+      if (pool.length === 0) {
+        const emptySky = document.createElement('div');
+        emptySky.className = 'sky-empty';
+        emptySky.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;color:#eed9be;z-index:15;padding:20px;';
+        if (!remoteWishesLoaded) {
+          emptySky.innerHTML = `
+            <p style="margin-bottom:12px;font-family:'Charm',cursive;font-size:26px;color:var(--gold);">☾ Đang thắp sáng những ngọn đèn dưới ánh trăng…</p>
+          `;
+        } else {
+          emptySky.innerHTML = `
+            <p style="font-size:16px;margin-bottom:12px;font-family:'Charm',cursive;font-size:24px;color:var(--gold);">Bầu trời đêm rằm đang đợi ngọn đèn đầu tiên…</p>
+            <a href="write.html" class="gold" style="font-size:13px;padding:10px 22px;display:inline-block;">Thả ngọn đèn đầu tiên lên trời ✧</a>
+          `;
+        }
+        skyContainer.append(emptySky);
+      } else {
+        const targetCount = Math.min(pool.length, matchMedia('(max-width: 600px)').matches ? 8 : 14);
+        const lanes = [5, 19, 33, 48, 63, 78, 92, 12, 26, 41, 56, 70, 84, 96];
+        const durations = [31, 39, 35, 42, 33, 38, 44, 36, 41, 32, 45, 37, 34, 40];
+        const depths = ['depth-mid', 'depth-near', 'depth-far', 'depth-mid', 'depth-near', 'depth-mid', 'depth-far'];
+        let nextIndex = 0;
+
+        function assignWish(button) {
+          const w = pool[nextIndex % pool.length];
+          nextIndex++;
+          const type = normalizeLanternType(w.lanternType);
+          button.classList.remove(...lanternTypes, 'user-wish');
+          button.classList.add(type);
+          if (w.isUser) button.classList.add('user-wish');
+          const icon = button.querySelector('img');
+          if (icon) {
+            icon.onerror = () => { icon.onerror = null; icon.src = getLanternAsset(type, 'png'); };
+            icon.src = getLanternAsset(type);
+          }
+
+          const nameText = w.isUser ? (state.name || 'Bạn') : displayName(w);
+
+          let tag = button.querySelector('.lantern-tag');
+          if (!tag) {
+            tag = document.createElement('span');
+            tag.className = 'lantern-tag';
+            button.append(tag);
+          }
+          tag.textContent = nameText;
+          if (w.isUser) {
+            tag.innerHTML = `<span class="user-badge">☾</span> ${nameText}`;
+          }
+
+          let preview = button.querySelector('.lantern-preview-card');
+          if (!preview) {
+            preview = document.createElement('div');
+            preview.className = 'lantern-preview-card';
+            button.append(preview);
+          }
+          const snippet = w.content && w.content.length > 72 ? w.content.slice(0, 70) + '…' : (w.content || '...');
+          preview.innerHTML = `
+            <div class="preview-sender">${nameText}</div>
+            <div class="preview-text">"${snippet}"</div>
+            <div class="preview-hint">Chạm để mở trọn vẹn ☾</div>
+          `;
+
+          button.setAttribute('aria-label', `Lời chúc từ ${nameText}`);
+          button.onclick = (e) => {
+            e.stopPropagation();
+            showWish(w, Boolean(w.isUser));
+          };
         }
 
-        const nameText = w.isUser ? (state.name || 'Bạn') : displayName(w);
+        for (let i = 0; i < targetCount; i++) {
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.className = `sky-lantern ${depths[i % depths.length]}`;
 
-        // Ribbon name tag under lantern (Ý tưởng 1)
-        let tag = button.querySelector('.lantern-tag');
-        if (!tag) {
-          tag = document.createElement('span');
-          tag.className = 'lantern-tag';
-          button.append(tag);
-        }
-        tag.textContent = nameText;
-        if (w.isUser) {
-          tag.innerHTML = `<span class="user-badge">☾</span> ${nameText}`;
-        }
+          const xLane = lanes[i % lanes.length];
+          const duration = durations[i % durations.length];
+          const progress = i / targetCount;
+          const delay = -((progress * duration + (i % 4) * 1.3) % duration);
+          const rotStart = (i % 2 === 0 ? -3.5 : 3.5);
+          const rotMid = -rotStart;
+          const drift = ((i % 4) - 1.5) * 14;
 
-        // Hover tooltip preview card (Ý tưởng 1)
-        let preview = button.querySelector('.lantern-preview-card');
-        if (!preview) {
-          preview = document.createElement('div');
-          preview.className = 'lantern-preview-card';
-          button.append(preview);
-        }
-        const snippet = w.content && w.content.length > 72 ? w.content.slice(0, 70) + '…' : (w.content || '...');
-        preview.innerHTML = `
-          <div class="preview-sender">${nameText}</div>
-          <div class="preview-text">“${snippet}”</div>
-          <div class="preview-hint">Chạm để mở trọn vẹn ☾</div>
-        `;
+          b.style.setProperty('--x', xLane + '%');
+          b.style.setProperty('--duration', duration + 's');
+          b.style.setProperty('--delay', delay.toFixed(2) + 's');
+          b.style.setProperty('--rot-start', rotStart + 'deg');
+          b.style.setProperty('--rot-mid', rotMid + 'deg');
+          b.style.setProperty('--drift-1', (drift + 14) + 'px');
+          b.style.setProperty('--drift-2', (-drift - 12) + 'px');
+          b.style.setProperty('--drift-3', (drift + 16) + 'px');
+          b.style.setProperty('--drift-4', (-drift) + 'px');
 
-        button.setAttribute('aria-label', `Lời chúc từ ${nameText}`);
-        button.onclick = (e) => {
-          e.stopPropagation();
-          showWish(w, Boolean(w.isUser));
-        };
+          b.setAttribute('aria-label', 'Mở một lời chúc trên bầu trời');
+
+          const icon = document.createElement('img');
+          icon.className = 'lantern-icon';
+          icon.alt = '';
+          icon.loading = 'eager';
+          b.append(icon);
+          assignWish(b);
+          b.addEventListener('animationiteration', () => assignWish(b));
+
+          // Touch handler: giữ để xem preview, nhả để mở — tránh bug animation reset
+          let touchHoldTimer = null;
+          let touchMoved = false;
+
+          b.addEventListener('touchstart', (e) => {
+            touchMoved = false;
+            touchHoldTimer = setTimeout(() => {
+              b.classList.add('is-hovered');
+            }, 120);
+          }, { passive: true });
+
+          b.addEventListener('touchmove', () => {
+            touchMoved = true;
+            clearTimeout(touchHoldTimer);
+            b.classList.remove('is-hovered');
+          }, { passive: true });
+
+          b.addEventListener('touchend', (e) => {
+            clearTimeout(touchHoldTimer);
+            b.classList.remove('is-hovered');
+          }, { passive: true });
+
+          b.addEventListener('touchcancel', () => {
+            clearTimeout(touchHoldTimer);
+            b.classList.remove('is-hovered');
+          }, { passive: true });
+
+          skyContainer.append(b);
+        }
       }
-
-      for (let i = 0; i < targetCount; i++) {
-        const b = document.createElement('button');
-        b.type = 'button';
-        b.className = `sky-lantern ${depths[i % depths.length]}`;
-
-        const xLane = lanes[i % lanes.length];
-        const duration = durations[i % durations.length];
-        const progress = i / targetCount;
-        const delay = -((progress * duration + (i % 4) * 1.3) % duration);
-        const rotStart = (i % 2 === 0 ? -3.5 : 3.5);
-        const rotMid = -rotStart;
-        const drift = ((i % 4) - 1.5) * 14;
-
-        b.style.setProperty('--x', xLane + '%');
-        b.style.setProperty('--duration', duration + 's');
-        b.style.setProperty('--delay', delay.toFixed(2) + 's');
-        b.style.setProperty('--rot-start', rotStart + 'deg');
-        b.style.setProperty('--rot-mid', rotMid + 'deg');
-        b.style.setProperty('--drift-1', (drift + 14) + 'px');
-        b.style.setProperty('--drift-2', (-drift - 12) + 'px');
-        b.style.setProperty('--drift-3', (drift + 16) + 'px');
-        b.style.setProperty('--drift-4', (-drift) + 'px');
-
-        b.setAttribute('aria-label', 'Mở một lời chúc trên bầu trời');
-
-        const icon = document.createElement('img');
-        icon.className = 'lantern-icon';
-        icon.alt = '';
-        icon.loading = 'eager';
-        b.append(icon);
-        assignWish(b);
-        b.addEventListener('animationiteration', () => assignWish(b));
-
-        // Touch handler: giữ để xem preview, nhả để mở — tránh bug animation reset khi dùng CSS :hover paused
-        let touchHoldTimer = null;
-        let touchMoved = false;
-
-        b.addEventListener('touchstart', (e) => {
-          touchMoved = false;
-          // Sau 120ms giữ mới hiện preview (phân biệt tap nhanh vs giữ lâu)
-          touchHoldTimer = setTimeout(() => {
-            b.classList.add('is-hovered');
-          }, 120);
-        }, { passive: true });
-
-        b.addEventListener('touchmove', () => {
-          touchMoved = true;
-          clearTimeout(touchHoldTimer);
-          b.classList.remove('is-hovered');
-        }, { passive: true });
-
-        b.addEventListener('touchend', (e) => {
-          clearTimeout(touchHoldTimer);
-          b.classList.remove('is-hovered');
-          // Nếu không di chuyển = tap bình thường → mở wish
-          // Nếu đã giữ lâu (có preview) → không mở wish tự động
-        }, { passive: true });
-
-        b.addEventListener('touchcancel', () => {
-          clearTimeout(touchHoldTimer);
-          b.classList.remove('is-hovered');
-        }, { passive: true });
-
-        skyContainer.append(b);
-      }
-    }
+    } // end else (pool changed)
   }
 
   updateMusicUI();
