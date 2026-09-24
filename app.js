@@ -284,6 +284,18 @@ function getLanternAsset(type, extension = 'webp') {
   return `assets/lantern-${normalizeLanternType(type)}.${extension}`;
 }
 
+let lanternAssetsPreloaded = false;
+function preloadLanternAssets() {
+  if (lanternAssetsPreloaded) return;
+  lanternAssetsPreloaded = true;
+  lanternTypes.forEach(type => {
+    ['webp', 'png'].forEach(extension => {
+      const image = new Image();
+      image.src = getLanternAsset(type, extension);
+    });
+  });
+}
+
 const defaultBlessings = [
   'Mong bạn luôn là phiên bản hạnh phúc nhất của chính mình. Trăng đêm nay thật đẹp, và bạn cũng vậy.',
   'Mong những ngày sắp tới, bạn luôn gặp được những người tốt, những cơ hội tốt và đủ dũng cảm để theo đuổi điều mình muốn.',
@@ -948,13 +960,14 @@ function render() {
       }
     });
     const pool = Array.from(wishMap.values());
+    skyContainer._wishPool = pool;
 
-    // Chỉ render lại khi pool thực sự thay đổi (so sánh key = danh sách IDs)
-    // Tránh destroy đèn đang bay giữa chừng mỗi khi render() được gọi do polling
-    const newPoolKey = pool.map(w => w.id).join(',');
+    // Giữ nguyên các node đèn trong suốt thời gian ở trang Bầu trời. Dữ liệu mới
+    // chỉ được gán khi một đèn đã bay hết vòng và đang vô hình ở mép dưới.
+    const newPoolKey = pool.length > 0 ? 'active' : 'empty';
     const oldPoolKey = skyContainer.dataset.poolKey || '';
     if (newPoolKey === oldPoolKey && skyContainer.children.length > 0) {
-      // Pool không đổi, đèn đang bay bình thường — bỏ qua, không render lại
+      // Cập nhật _wishPool ở trên là đủ; không phá animation đang chạy.
     } else {
       skyContainer.dataset.poolKey = newPoolKey;
       skyContainer.replaceChildren();
@@ -975,15 +988,23 @@ function render() {
         }
         skyContainer.append(emptySky);
       } else {
+        preloadLanternAssets();
         const targetCount = Math.min(pool.length, matchMedia('(max-width: 600px)').matches ? 8 : 14);
         const lanes = [5, 19, 33, 48, 63, 78, 92, 12, 26, 41, 56, 70, 84, 96];
         const durations = [31, 39, 35, 42, 33, 38, 44, 36, 41, 32, 45, 37, 34, 40];
         const depths = ['depth-mid', 'depth-near', 'depth-far', 'depth-mid', 'depth-near', 'depth-mid', 'depth-far'];
-        let nextIndex = 0;
 
         function assignWish(button) {
-          const w = pool[nextIndex % pool.length];
-          nextIndex++;
+          const activePool = skyContainer._wishPool || [];
+          if (!activePool.length) return;
+          const cursor = Number(button.dataset.wishCursor || 0);
+          const w = activePool[cursor % activePool.length];
+          button.dataset.wishCursor = String(cursor + targetCount);
+
+          const wishVersion = [w.id, w.updated || w.created || '', w.name || '', w.content || '', w.isUser ? state.name : ''].join('|');
+          if (button.dataset.wishVersion === wishVersion) return;
+          button.dataset.wishVersion = wishVersion;
+
           const type = normalizeLanternType(w.lanternType);
           button.classList.remove(...lanternTypes, 'user-wish');
           button.classList.add(type);
@@ -991,7 +1012,8 @@ function render() {
           const icon = button.querySelector('img');
           if (icon) {
             icon.onerror = () => { icon.onerror = null; icon.src = getLanternAsset(type, 'png'); };
-            icon.src = getLanternAsset(type);
+            const nextAsset = getLanternAsset(type);
+            if (icon.getAttribute('src') !== nextAsset) icon.src = nextAsset;
           }
 
           const nameText = w.isUser ? (state.name || 'Bạn') : displayName(w);
@@ -1057,8 +1079,17 @@ function render() {
           icon.alt = '';
           icon.loading = 'eager';
           b.append(icon);
+          b.dataset.wishCursor = String(i);
           assignWish(b);
-          b.addEventListener('animationiteration', () => assignWish(b));
+          b.addEventListener('animationiteration', event => {
+            // animationiteration của thẻ tên (tag-sway) có bubble lên button.
+            // Chỉ tái sử dụng đèn khi chính animation bay đã kết thúc.
+            if (event.target !== b || event.animationName !== 'lantern-drift') return;
+            // Che đúng hai frame đầu của vòng mới để việc đổi ảnh/tên không lóe sáng.
+            b.style.setProperty('opacity', '0', 'important');
+            assignWish(b);
+            requestAnimationFrame(() => requestAnimationFrame(() => b.style.removeProperty('opacity')));
+          });
 
           // Touch handler: giữ để xem preview, nhả để mở — tránh bug animation reset
           let touchHoldTimer = null;
