@@ -894,6 +894,37 @@ function render() {
         b.append(icon);
         assignWish(b);
         b.addEventListener('animationiteration', () => assignWish(b));
+
+        // Touch handler: giữ để xem preview, nhả để mở — tránh bug animation reset khi dùng CSS :hover paused
+        let touchHoldTimer = null;
+        let touchMoved = false;
+
+        b.addEventListener('touchstart', (e) => {
+          touchMoved = false;
+          // Sau 120ms giữ mới hiện preview (phân biệt tap nhanh vs giữ lâu)
+          touchHoldTimer = setTimeout(() => {
+            b.classList.add('is-hovered');
+          }, 120);
+        }, { passive: true });
+
+        b.addEventListener('touchmove', () => {
+          touchMoved = true;
+          clearTimeout(touchHoldTimer);
+          b.classList.remove('is-hovered');
+        }, { passive: true });
+
+        b.addEventListener('touchend', (e) => {
+          clearTimeout(touchHoldTimer);
+          b.classList.remove('is-hovered');
+          // Nếu không di chuyển = tap bình thường → mở wish
+          // Nếu đã giữ lâu (có preview) → không mở wish tự động
+        }, { passive: true });
+
+        b.addEventListener('touchcancel', () => {
+          clearTimeout(touchHoldTimer);
+          b.classList.remove('is-hovered');
+        }, { passive: true });
+
         skyContainer.append(b);
       }
     }
