@@ -1174,25 +1174,21 @@ async function openGift() {
   await new Promise(r => setTimeout(r, 900));
 
   if (!state.claim) {
-    // Be boc qua: Tron lan wish cua nguoi dung (cua nguoi khac) va wish he thong
-    // Loai wish cua chinh ban than de khong boc trung wish minh viet
+    // Be boc qua: Tron tat ca wish cua nguoi dung (tru cua minh) + toan bo 50 wish he thong
     const liveWishes = communityWishes.filter(w => w.public && w.content && w.id !== state.visitorId);
 
-    // Tao pool he thong: lay ngau nhien 5 blessing de tron vao pool
-    const SYSTEM_POOL_SIZE = 5;
-    const systemWishes = Array.from({ length: SYSTEM_POOL_SIZE }, () => {
-      const idx = Math.floor(Math.random() * defaultBlessings.length);
-      return {
-        id: 'system_' + idx,
-        content: defaultBlessings[idx],
-        name: 'Trang Ram',
-        anonymous: false
-      };
-    });
+    // Chuyen toan bo defaultBlessings thanh objects cung format voi user wishes
+    const systemWishes = defaultBlessings.map((content, idx) => ({
+      id: 'system_' + idx,
+      content,
+      name: 'Trang Ram',
+      anonymous: false
+    }));
 
-    // Tron chung: wish nguoi dung + wish he thong, random deu tren pool
+    // Pool = wish nguoi dung + tat ca 50 wish he thong, random deu
     const pool = [...liveWishes, ...systemWishes];
     const picked = pool[Math.floor(Math.random() * pool.length)];
+
 
 
     const claim = {
