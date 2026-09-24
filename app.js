@@ -24,15 +24,6 @@ function fetchFresh(url, options = {}) {
   }
 }
 
-// Helper fetch cho wish list: cho phép trình duyệt cache tối đa 60s
-// Giảm download đáng kể khi poll thường xuyên
-function fetchCached(url, options = {}) {
-  return fetch(url, {
-    ...options,
-    cache: 'default'
-  });
-}
-
 // Hàm hỗ trợ xóa sạch dữ liệu máy để kiểm thử
 window.resetMidAutumnState = function() {
   try {
@@ -40,6 +31,7 @@ window.resetMidAutumnState = function() {
     localStorage.removeItem('moonwish-claim-cache');
     localStorage.removeItem('moonwish-community-cache');
     sessionStorage.clear();
+    if ('indexedDB' in window) indexedDB.deleteDatabase('moonwish-sky-cache-v1');
   } catch {}
   location.reload();
 };
@@ -202,8 +194,13 @@ function save() {
 }
 
 const COMMUNITY_WISHES_KEY = 'moonwish-community-cache';
+const SKY_CACHE_DB = 'moonwish-sky-cache-v1';
+const SKY_CACHE_STORE = 'snapshots';
+const SKY_CACHE_RECORD = 'all-public-wishes';
+const SKY_CACHE_MAX_AGE = 6 * 60 * 60 * 1000;
 let communityWishes = [];
 let remoteWishesLoaded = false;
+let wishCacheRecord = null;
 try {
   const cachedWishes = JSON.parse(localStorage.getItem(COMMUNITY_WISHES_KEY));
   if (Array.isArray(cachedWishes) && cachedWishes.length > 0) {
@@ -212,7 +209,69 @@ try {
   }
 } catch {}
 
+function openWishCacheDb() {
+  if (!('indexedDB' in window)) return Promise.resolve(null);
+  return new Promise(resolve => {
+    const request = indexedDB.open(SKY_CACHE_DB, 1);
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains(SKY_CACHE_STORE)) db.createObjectStore(SKY_CACHE_STORE);
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => resolve(null);
+  });
+}
+
+async function readWishCache() {
+  const db = await openWishCacheDb();
+  if (!db) return null;
+  return new Promise(resolve => {
+    const tx = db.transaction(SKY_CACHE_STORE, 'readonly');
+    const request = tx.objectStore(SKY_CACHE_STORE).get(SKY_CACHE_RECORD);
+    request.onsuccess = () => resolve(request.result || null);
+    request.onerror = () => resolve(null);
+    tx.oncomplete = () => db.close();
+  });
+}
+
+async function writeWishCache(record) {
+  const db = await openWishCacheDb();
+  if (!db) return;
+  await new Promise(resolve => {
+    const tx = db.transaction(SKY_CACHE_STORE, 'readwrite');
+    tx.objectStore(SKY_CACHE_STORE).put(record, SKY_CACHE_RECORD);
+    tx.oncomplete = () => { db.close(); resolve(); };
+    tx.onerror = () => { db.close(); resolve(); };
+  });
+}
+
+function applyCommunityWishes(wishes) {
+  remoteWishesLoaded = true;
+  communityWishes = (Array.isArray(wishes) ? wishes : [])
+    .filter(w => w && w.content)
+    .map(w => ({
+      ...w,
+      likesCount: typeof w.likesCount === 'number' ? w.likesCount : 0,
+      picksCount: typeof w.picksCount === 'number' ? w.picksCount : 0
+    }))
+    .sort((a, b) => new Date(b.created || 0) - new Date(a.created || 0));
+
+  const myRemoteWish = communityWishes.find(w => w.id === state.visitorId);
+  state.wishes = myRemoteWish ? [myRemoteWish] : [];
+  save();
+  render();
+}
+
+const wishCacheReady = readWishCache().then(record => {
+  if (record && Array.isArray(record.wishes)) {
+    wishCacheRecord = record;
+    applyCommunityWishes(record.wishes);
+  }
+  return record;
+}).catch(() => null);
+
 let claimReady = Promise.resolve();
+let claimSyncStarted = false;
 
 const lanternTypes = ['ong-sao', 'ca-chep', 'keo-quan', 'tho-ngoc', 'hoi-an'];
 function normalizeLanternType(type) {
@@ -283,9 +342,10 @@ const defaultBlessings = [
 ];
 
 /* Live Cloud Sync (Firebase Realtime Database) */
-function initLiveSync() {
-  try {
-    claimReady = (async () => {
+function startClaimSync() {
+  if (claimSyncStarted) return claimReady;
+  claimSyncStarted = true;
+  claimReady = (async () => {
       const devId = await deviceReady;
 
       // 1. Đồng bộ người dùng thiết bị vật lý trên Firebase
@@ -325,7 +385,7 @@ function initLiveSync() {
               saveClaim(claim);
               render();
               foundRemoteClaim = true;
-              fetch(`${FIREBASE_DB_URL}/device_claims/${devId}.json`, {
+              fetch(`${FIREBASE_DB_URL}/device_claims/${devId}.json?print=silent`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ ...claim, deviceId: devId })
@@ -344,47 +404,81 @@ function initLiveSync() {
       }
 
       return state.claim;
-    })().catch(() => {});
+  })().catch(() => {});
+  return claimReady;
+}
 
+function initLiveSync() {
+  try {
+    const page = document.body.dataset.page || '';
+    // Chỉ trang cần hiển thị quà mới kiểm tra khóa quà từ Firebase.
+    // Trang chủ, Bầu trời và Hòm thư không còn phát sinh ba lượt đọc này.
+    if (page === 'gift' || page === 'profile') startClaimSync();
+
+    // Bầu trời và Hòm thư tự tải đúng một lần trong mỗi phiên.
+    // Các trang khác dùng cache cục bộ và không chạm Firebase wishes.
     syncRemoteWishes();
-
-    // Polling 60 giay/lan - giam ~6x download so voi 10s, khong anh huong UX
-    if (wishesPollingTimer) clearInterval(wishesPollingTimer);
-    wishesPollingTimer = setInterval(syncRemoteWishes, 60000);
   } catch (err) {
     console.warn('Live sync fallback:', err);
   }
 }
 
-// Cac trang can live wish data - chi cac trang nay moi polling lien tuc
-// Cac trang khac (write, gift, card...) chi lay tu cache, khong can poll
-const WISH_LIVE_PAGES = new Set(['wishes', 'sky', 'home', '']);
+const WISH_CLOUD_PAGES = new Set(['wishes', 'sky']);
+let wishesSyncedThisSession = false;
+let wishesSyncPromise = null;
 
-let wishesPollingTimer = null;
-let lastWishSyncAt = 0; // Timestamp lan sync cuoi - dung de debounce khi tab active lai
-
-async function syncRemoteWishes() {
-  if (document.hidden) return;
-
-  // Chi poll tren cac trang thuc su hien thi wish list (wishes.html, sky.html, index)
-  const page = document.body.dataset.page || '';
-  if (!WISH_LIVE_PAGES.has(page)) return;
-
+async function readWishVersion() {
   try {
-    // fetchCached: trinh duyet tu quyet dinh cache ~60s, khong gui request neu con fresh
-    const res = await fetchCached(`${FIREBASE_DB_URL}/wishes.json`);
-    if (res.ok) {
-      const data = await res.json();
-      handleRemoteWishes(data);
-      lastWishSyncAt = Date.now();
-    }
-  } catch {}
+    const response = await fetchFresh(`${FIREBASE_DB_URL}/meta/wishesVersion.json`);
+    if (!response.ok) return 0;
+    const value = Number(await response.json());
+    return Number.isFinite(value) ? value : 0;
+  } catch {
+    return null;
+  }
 }
 
-function handleRemoteWishes(data) {
-  remoteWishesLoaded = true;
+async function syncRemoteWishes(options = {}) {
+  const force = Boolean(options.force);
+  const page = document.body.dataset.page || '';
+  if (!WISH_CLOUD_PAGES.has(page) || (document.hidden && !force)) return;
+  if (wishesSyncedThisSession && !force) return;
+  if (wishesSyncPromise) return wishesSyncPromise;
+
+  wishesSyncPromise = (async () => {
+    await wishCacheReady;
+    const cacheIsFresh = wishCacheRecord
+      && Array.isArray(wishCacheRecord.wishes)
+      && Date.now() - Number(wishCacheRecord.savedAt || 0) < SKY_CACHE_MAX_AGE;
+
+    let serverVersion = null;
+    if (!force && cacheIsFresh) {
+      serverVersion = await readWishVersion();
+      if (serverVersion !== null && Number(wishCacheRecord.version || 0) === serverVersion) {
+        wishesSyncedThisSession = true;
+        return;
+      }
+    }
+
+    if (serverVersion === null) serverVersion = await readWishVersion();
+    const response = await fetchFresh(`${FIREBASE_DB_URL}/wishes.json`);
+    if (!response.ok) throw new Error('Chưa thể tải Bầu trời từ Firebase.');
+    const data = await response.json();
+    handleRemoteWishes(data, serverVersion || 0);
+    wishesSyncedThisSession = true;
+  })().catch(err => {
+    console.warn('Wish snapshot sync failed:', err);
+    if (!communityWishes.length) toast('Đang dùng Bầu trời đã lưu trên thiết bị.');
+  }).finally(() => {
+    wishesSyncPromise = null;
+  });
+
+  return wishesSyncPromise;
+}
+
+function handleRemoteWishes(data, version = 0) {
   const wishMap = (data && typeof data === 'object') ? data : {};
-  communityWishes = Object.entries(wishMap)
+  const wishes = Object.entries(wishMap)
     .filter(([_, val]) => val && val.content)
     .map(([id, val]) => ({
       ...val,
@@ -394,23 +488,32 @@ function handleRemoteWishes(data) {
     }))
     .sort((a, b) => new Date(b.created || 0) - new Date(a.created || 0));
 
+  applyCommunityWishes(wishes);
+
   try {
-    if (communityWishes.length > 0) {
-      localStorage.setItem(COMMUNITY_WISHES_KEY, JSON.stringify(communityWishes.slice(0, 60)));
+    if (wishes.length > 0) {
+      // Một bản nhỏ giúp giao diện hiện ngay; IndexedDB bên dưới giữ toàn bộ Bầu trời.
+      localStorage.setItem(COMMUNITY_WISHES_KEY, JSON.stringify(wishes.slice(0, 60)));
     } else {
       localStorage.removeItem(COMMUNITY_WISHES_KEY);
     }
   } catch {}
 
-  const myRemoteWish = communityWishes.find(w => w.id === state.visitorId);
-  if (myRemoteWish) {
-    state.wishes = [myRemoteWish];
-  } else {
-    // Nếu trên Firebase đã bị xóa (DB reset), làm sạch state.wishes trên máy!
-    state.wishes = [];
-  }
-  save();
-  render();
+  wishCacheRecord = { wishes, version: Number(version || 0), savedAt: Date.now() };
+  writeWishCache(wishCacheRecord).catch(() => {});
+}
+
+function persistCurrentWishCache(versionDelta = 0) {
+  const currentVersion = Number(wishCacheRecord?.version || 0);
+  wishCacheRecord = {
+    wishes: communityWishes,
+    version: currentVersion + versionDelta,
+    savedAt: Date.now()
+  };
+  try {
+    localStorage.setItem(COMMUNITY_WISHES_KEY, JSON.stringify(communityWishes.slice(0, 60)));
+  } catch {}
+  writeWishCache(wishCacheRecord).catch(() => {});
 }
 
 async function toggleWishLike(wishId) {
@@ -431,18 +534,20 @@ async function toggleWishLike(wishId) {
 
   save();
   render();
+  // Like chỉ cập nhật số tương tác, không làm mọi máy tải lại toàn bộ Bầu trời.
+  persistCurrentWishCache();
 
   try {
-    await fetch(`${FIREBASE_DB_URL}/wishes/${encodeURIComponent(wishId)}/likesCount.json`, {
-      method: 'PUT',
+    const updates = {
+      [`wishes/${wishId}/likesCount`]: { '.sv': { increment: isLiked ? -1 : 1 } },
+      [`wish_likes/${wishId}/${state.visitorId}`]: isLiked ? null : true
+    };
+    const response = await fetch(`${FIREBASE_DB_URL}/.json?print=silent`, {
+      method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newCount)
+      body: JSON.stringify(updates)
     });
-    await fetch(`${FIREBASE_DB_URL}/wish_likes/${encodeURIComponent(wishId)}/${state.visitorId}.json`, {
-      method: isLiked ? 'DELETE' : 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: isLiked ? undefined : JSON.stringify(true)
-    });
+    if (!response.ok) throw new Error('Like update failed');
   } catch (err) {
     console.warn('Like sync failed:', err);
   }
@@ -1176,7 +1281,7 @@ async function openGift() {
     return { content: state.claim.content };
   }
 
-  await claimReady;
+  await startClaimSync();
   const devId = state.deviceId || (await deviceReady);
 
   // 2. Kiểm tra lại nếu claimReady vừa cập nhật xong
@@ -1184,19 +1289,6 @@ async function openGift() {
     showWish(state.claim, true);
     return { content: state.claim.content };
   }
-
-  // Kiểm tra trực tiếp trên Firebase xem thiết bị vật lý này đã mở quà ở trình duyệt khác chưa
-  try {
-    const devCheck = await fetchFresh(`${FIREBASE_DB_URL}/device_claims/${devId}.json`);
-    const devClaim = devCheck.ok ? await devCheck.json() : null;
-    if (devClaim && devClaim.content) {
-      saveClaim(devClaim);
-      render();
-      toast('Thiết bị này đã nhận quà Trung Thu rồi! Đang mở lại món quà của bạn ☾');
-      showWish(state.claim, true);
-      return { content: state.claim.content };
-    }
-  } catch (_) {}
 
   if (opening) return { opening: true };
   opening = true;
@@ -1232,13 +1324,12 @@ async function openGift() {
 
     // Khóa món quà trên Firebase theo cả visitorId và deviceId vật lý
     const claimPath = `${FIREBASE_DB_URL}/claims/${state.visitorId}.json`;
-    const devClaimPath = `${FIREBASE_DB_URL}/device_claims/${devId}.json`;
     const claimCheck = await fetchFresh(claimPath, { headers: { 'X-Firebase-ETag': 'true' } });
     const existingClaim = claimCheck.ok ? await claimCheck.json() : null;
     if (existingClaim?.content) {
       saveClaim(existingClaim);
     } else {
-      const claimResponse = await fetch(claimPath, {
+      const claimResponse = await fetch(`${claimPath}?print=silent`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', 'if-match': claimCheck.headers.get('etag') || '*' },
       body: JSON.stringify(claim)
@@ -1251,32 +1342,24 @@ async function openGift() {
         if (!claimResponse.ok) throw new Error('Chưa thể lưu món quà lên Firebase.');
         saveClaim(claim);
 
-        // Lưu đồng thời khóa thiết bị vật lý lên Firebase
-        fetch(devClaimPath, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(claim)
-        }).catch(() => {});
+        const claimUpdates = {
+          [`device_claims/${devId}`]: { ...claim, deviceId: devId },
+          [`device_users/${devId}`]: state.visitorId
+        };
 
-        // Liên kết deviceId -> visitorId
-        fetch(`${FIREBASE_DB_URL}/device_users/${devId}.json`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(state.visitorId)
-        }).catch(() => {});
-
-        // Tăng lượt bốc của lời chúc nguồn nếu có
-        if (picked && picked.id) {
-          try {
-            const newPicks = (picked.picksCount || 0) + 1;
-            picked.picksCount = newPicks;
-            fetch(`${FIREBASE_DB_URL}/wishes/${encodeURIComponent(picked.id)}/picksCount.json`, {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(newPicks)
-            }).catch(() => {});
-          } catch {}
+        // Lời chúc mẫu không tạo node rác trong /wishes.
+        if (picked?.id && !picked.id.startsWith('system_')) {
+          picked.picksCount = (picked.picksCount || 0) + 1;
+          claimUpdates[`wishes/${picked.id}/picksCount`] = { '.sv': { increment: 1 } };
+          persistCurrentWishCache();
         }
+
+        // Hai khóa thiết bị và lượt bốc được ghi bằng một kết nối, không tải response body.
+        fetch(`${FIREBASE_DB_URL}/.json?print=silent`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(claimUpdates)
+        }).catch(() => {});
       }
     }
   }
@@ -1327,29 +1410,39 @@ async function sendWish(content, name, anonymous, isPublic, lanternType) {
     updated: new Date().toISOString()
   };
 
-  const response = await fetch(`${FIREBASE_DB_URL}/wishes/${wishId}.json`, {
-    method: 'PUT',
+  const devId = state.deviceId || (await deviceReady);
+  const cloudWish = {
+    name: w.name,
+    content: w.content,
+    anonymous: w.anonymous,
+    public: w.public,
+    lanternType: w.lanternType,
+    created: w.created,
+    updated: w.updated
+  };
+  const updates = {
+    [`wishes/${wishId}`]: cloudWish,
+    'meta/wishesVersion': { '.sv': { increment: 1 } },
+    'meta/wishesUpdatedAt': { '.sv': 'timestamp' }
+  };
+  if (devId) updates[`device_wishes/${devId}`] = wishId;
+
+  // Một PATCH duy nhất, phản hồi 204 rỗng để giảm cả kết nối lẫn download.
+  const response = await fetch(`${FIREBASE_DB_URL}/.json?print=silent`, {
+    method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(w)
+    body: JSON.stringify(updates)
   });
   if (!response.ok) throw new Error('Chưa thể lưu lời chúc lên Firebase. Vui lòng thử lại.');
   state.wishes = [w];
-
-  // Lưu liên kết device -> wish
-  const devId = state.deviceId || (await deviceReady);
-  if (devId) {
-    fetch(`${FIREBASE_DB_URL}/device_wishes/${devId}.json`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(wishId)
-    }).catch(() => {});
-  }
 
   // Cập nhật bộ nhớ đệm lời chúc cộng đồng
   const existIdx = communityWishes.findIndex(item => item.id === wishId);
   if (existIdx >= 0) communityWishes[existIdx] = w;
   else communityWishes.unshift(w);
 
+  wishesSyncedThisSession = true;
+  persistCurrentWishCache(1);
   render();
   return { id: w.id, public: w.public, lanternType: w.lanternType, isUpdate };
 }
@@ -1591,6 +1684,22 @@ function bindPageEvents() {
     moreWishes.onclick = () => {
       expanded = !expanded;
       render();
+    };
+  }
+
+  const refreshWishes = $('#refresh-wishes');
+  if (refreshWishes) {
+    refreshWishes.onclick = async () => {
+      const oldLabel = refreshWishes.innerHTML;
+      refreshWishes.disabled = true;
+      refreshWishes.textContent = 'Đang đón những ngọn đèn mới…';
+      try {
+        await syncRemoteWishes({ force: true });
+        toast('Bầu trời đã được làm mới từ Firebase ☾');
+      } finally {
+        refreshWishes.disabled = false;
+        refreshWishes.innerHTML = oldLabel;
+      }
     };
   }
 
@@ -3578,7 +3687,11 @@ function initPage() {
   } else if (page === 'card') {
     initCardPage();
   }
-  // Pages 'create-feast','feast','create-reunion','reunion','profile' are disabled
+
+  if (page === 'gift' || page === 'profile') {
+    startClaimSync().then(render).catch(() => {});
+  }
+  if (WISH_CLOUD_PAGES.has(page)) syncRemoteWishes();
 
   if (!state.name && page !== 'card') {
     const welcome = $('#welcome');
@@ -3590,13 +3703,6 @@ function initPage() {
 // Initial Boot & Smart Disconnect on Tab Sleep
 document.addEventListener('visibilitychange', () => {
   document.body.classList.toggle('paused-motion', document.hidden);
-  if (!document.hidden) {
-    // Debounce: chi sync lai neu da > 30s tu lan cuoi (tranh burst request khi alt-tab lien tuc)
-    if (Date.now() - lastWishSyncAt > 30000) {
-      syncRemoteWishes();
-    }
-    // feast / reunion disabled - no refetch
-  }
 });
 
 function initAutoMusic() {
