@@ -1174,25 +1174,26 @@ async function openGift() {
   await new Promise(r => setTimeout(r, 900));
 
   if (!state.claim) {
-    // Bể bốc quà: Lời chúc thật từ cộng đồng Firebase
-    const liveWishes = communityWishes.filter(w => w.public && w.content);
-    // Ưu tiên bốc lời chúc của người khác nếu có
-    const others = liveWishes.filter(w => w.id !== state.visitorId);
-    let picked;
+    // Be boc qua: Tron lan wish cua nguoi dung (cua nguoi khac) va wish he thong
+    // Loai wish cua chinh ban than de khong boc trung wish minh viet
+    const liveWishes = communityWishes.filter(w => w.public && w.content && w.id !== state.visitorId);
 
-    if (others.length > 0) {
-      picked = others[Math.floor(Math.random() * others.length)];
-    } else if (liveWishes.length > 0) {
-      picked = liveWishes[Math.floor(Math.random() * liveWishes.length)];
-    } else {
-      // Fallback nếu hòm thư cộng đồng chưa có lời chúc nào
-      picked = {
-        id: 'system_' + Math.floor(Math.random() * defaultBlessings.length),
-        content: defaultBlessings[Math.floor(Math.random() * defaultBlessings.length)],
-        name: 'Trăng Rằm',
+    // Tao pool he thong: lay ngau nhien 5 blessing de tron vao pool
+    const SYSTEM_POOL_SIZE = 5;
+    const systemWishes = Array.from({ length: SYSTEM_POOL_SIZE }, () => {
+      const idx = Math.floor(Math.random() * defaultBlessings.length);
+      return {
+        id: 'system_' + idx,
+        content: defaultBlessings[idx],
+        name: 'Trang Ram',
         anonymous: false
       };
-    }
+    });
+
+    // Tron chung: wish nguoi dung + wish he thong, random deu tren pool
+    const pool = [...liveWishes, ...systemWishes];
+    const picked = pool[Math.floor(Math.random() * pool.length)];
+
 
     const claim = {
       ...picked,
