@@ -348,22 +348,35 @@ function initLiveSync() {
 
     syncRemoteWishes();
 
-    // Polling nhẹ nhàng 10 giây/lần qua HTTP REST (không giữ kết nối liên tục)
+    // Polling 60 giay/lan - giam ~6x download so voi 10s, khong anh huong UX
     if (wishesPollingTimer) clearInterval(wishesPollingTimer);
-    wishesPollingTimer = setInterval(syncRemoteWishes, 10000);
+    wishesPollingTimer = setInterval(syncRemoteWishes, 60000);
   } catch (err) {
     console.warn('Live sync fallback:', err);
   }
 }
 
+// Cac trang can live wish data - chi cac trang nay moi polling lien tuc
+// Cac trang khac (write, gift, card...) chi lay tu cache, khong can poll
+const WISH_LIVE_PAGES = new Set(['wishes', 'sky', 'home', '']);
+
 let wishesPollingTimer = null;
+let lastWishSyncAt = 0; // Timestamp lan sync cuoi - dung de debounce khi tab active lai
+
 async function syncRemoteWishes() {
   if (document.hidden) return;
+
+  // Chi poll tren cac trang thuc su hien thi wish list (wishes.html, sky.html, index)
+  const page = document.body.dataset.page || '';
+  if (!WISH_LIVE_PAGES.has(page)) return;
+
   try {
-    const res = await fetchFresh(`${FIREBASE_DB_URL}/wishes.json`);
+    // fetchCached: trinh duyet tu quyet dinh cache ~60s, khong gui request neu con fresh
+    const res = await fetchCached(`${FIREBASE_DB_URL}/wishes.json`);
     if (res.ok) {
       const data = await res.json();
       handleRemoteWishes(data);
+      lastWishSyncAt = Date.now();
     }
   } catch {}
 }
@@ -3547,7 +3560,10 @@ function initPage() {
 document.addEventListener('visibilitychange', () => {
   document.body.classList.toggle('paused-motion', document.hidden);
   if (!document.hidden) {
-    syncRemoteWishes();
+    // Debounce: chi sync lai neu da > 30s tu lan cuoi (tranh burst request khi alt-tab lien tuc)
+    if (Date.now() - lastWishSyncAt > 30000) {
+      syncRemoteWishes();
+    }
     // feast / reunion disabled - no refetch
   }
 });
