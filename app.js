@@ -30,6 +30,7 @@ window.resetMidAutumnState = function() {
     localStorage.removeItem(KEY);
     localStorage.removeItem('moonwish-claim-cache');
     localStorage.removeItem('moonwish-community-cache');
+    localStorage.removeItem('moonwish-last-sky-sync');
     sessionStorage.clear();
     if ('indexedDB' in window) indexedDB.deleteDatabase('moonwish-sky-cache-v1');
   } catch {}
@@ -424,8 +425,26 @@ function initLiveSync() {
 }
 
 const WISH_CLOUD_PAGES = new Set(['wishes', 'sky']);
+const WISH_REFRESH_AT_KEY = 'moonwish-last-sky-sync';
+const WISH_REFRESH_COOLDOWN = 5 * 60 * 1000;
 let wishesSyncedThisSession = false;
 let wishesSyncPromise = null;
+let refreshCooldownTimer = null;
+
+function getWishRefreshRemaining() {
+  try {
+    const lastSyncAt = Number(localStorage.getItem(WISH_REFRESH_AT_KEY) || 0);
+    return Math.max(0, WISH_REFRESH_COOLDOWN - (Date.now() - lastSyncAt));
+  } catch {
+    return 0;
+  }
+}
+
+function rememberWishSync() {
+  try {
+    localStorage.setItem(WISH_REFRESH_AT_KEY, String(Date.now()));
+  } catch {}
+}
 
 async function readWishVersion() {
   try {
@@ -456,7 +475,9 @@ async function syncRemoteWishes(options = {}) {
       serverVersion = await readWishVersion();
       if (serverVersion !== null && Number(wishCacheRecord.version || 0) === serverVersion) {
         wishesSyncedThisSession = true;
-        return;
+        rememberWishSync();
+        setupRefreshCooldown($('#refresh-wishes'));
+        return true;
       }
     }
 
@@ -466,14 +487,48 @@ async function syncRemoteWishes(options = {}) {
     const data = await response.json();
     handleRemoteWishes(data, serverVersion || 0);
     wishesSyncedThisSession = true;
+    rememberWishSync();
+    setupRefreshCooldown($('#refresh-wishes'));
+    return true;
   })().catch(err => {
     console.warn('Wish snapshot sync failed:', err);
     if (!communityWishes.length) toast('Đang dùng Bầu trời đã lưu trên thiết bị.');
+    return false;
   }).finally(() => {
     wishesSyncPromise = null;
   });
 
   return wishesSyncPromise;
+}
+
+function setupRefreshCooldown(button) {
+  if (!button) return;
+  if (refreshCooldownTimer) clearInterval(refreshCooldownTimer);
+  if (!button.dataset.readyLabel) button.dataset.readyLabel = button.innerHTML;
+
+  const update = () => {
+    const remaining = getWishRefreshRemaining();
+    if (remaining <= 0) {
+      button.disabled = false;
+      button.innerHTML = button.dataset.readyLabel;
+      button.removeAttribute('title');
+      if (refreshCooldownTimer) {
+        clearInterval(refreshCooldownTimer);
+        refreshCooldownTimer = null;
+      }
+      return;
+    }
+
+    const totalSeconds = Math.ceil(remaining / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = String(totalSeconds % 60).padStart(2, '0');
+    button.disabled = true;
+    button.textContent = `Đã cập nhật · ${minutes}:${seconds}`;
+    button.title = 'Để tiết kiệm dữ liệu, Bầu trời chỉ có thể làm mới mỗi 5 phút.';
+  };
+
+  update();
+  if (getWishRefreshRemaining() > 0) refreshCooldownTimer = setInterval(update, 1000);
 }
 
 function handleRemoteWishes(data, version = 0) {
@@ -1689,16 +1744,23 @@ function bindPageEvents() {
 
   const refreshWishes = $('#refresh-wishes');
   if (refreshWishes) {
+    setupRefreshCooldown(refreshWishes);
     refreshWishes.onclick = async () => {
-      const oldLabel = refreshWishes.innerHTML;
+      const remaining = getWishRefreshRemaining();
+      if (remaining > 0) {
+        toast(`Bạn vừa cập nhật Bầu trời. Hãy thử lại sau ${Math.ceil(remaining / 60000)} phút nhé.`);
+        setupRefreshCooldown(refreshWishes);
+        return;
+      }
+
       refreshWishes.disabled = true;
       refreshWishes.textContent = 'Đang đón những ngọn đèn mới…';
       try {
-        await syncRemoteWishes({ force: true });
-        toast('Bầu trời đã được làm mới từ Firebase ☾');
+        const synced = await syncRemoteWishes({ force: true });
+        if (synced) toast('Bầu trời đã được làm mới từ Firebase ☾');
+        else toast('Chưa thể làm mới Bầu trời. Bạn có thể thử lại sau.');
       } finally {
-        refreshWishes.disabled = false;
-        refreshWishes.innerHTML = oldLabel;
+        setupRefreshCooldown(refreshWishes);
       }
     };
   }
