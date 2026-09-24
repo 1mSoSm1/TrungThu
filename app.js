@@ -1383,9 +1383,10 @@ async function openGift() {
   if (giftObj) giftObj.classList.add('opening');
   $$('[data-action="gift"]').forEach(b => b.disabled = true);
 
-  await new Promise(r => setTimeout(r, 900));
+  try {
+    await new Promise(r => setTimeout(r, 900));
 
-  if (!state.claim) {
+    if (!state.claim) {
     // Be boc qua: Tron tat ca wish cua nguoi dung (tru cua minh) + toan bo 50 wish he thong
     const liveWishes = communityWishes.filter(w => w.public && w.content && w.id !== state.visitorId);
 
@@ -1409,23 +1410,23 @@ async function openGift() {
     };
 
     // Khóa món quà trên Firebase theo cả visitorId và deviceId vật lý
-    const claimPath = `${FIREBASE_DB_URL}/claims/${state.visitorId}.json`;
-    const claimCheck = await fetchFresh(claimPath, { headers: { 'X-Firebase-ETag': 'true' } });
-    const existingClaim = claimCheck.ok ? await claimCheck.json() : null;
-    if (existingClaim?.content) {
-      saveClaim(existingClaim);
-    } else {
-      const claimResponse = await fetch(`${claimPath}?print=silent`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json', 'if-match': claimCheck.headers.get('etag') || '*' },
-      body: JSON.stringify(claim)
+      const claimPath = `${FIREBASE_DB_URL}/claims/${state.visitorId}.json`;
+      // Firebase không hỗ trợ print=silent cùng conditional headers. if-none-match
+      // vừa giữ quy tắc một người/một quà, vừa bỏ được lượt GET ETag trước đó.
+      const claimResponse = await fetch(claimPath, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'if-none-match': '*' },
+        body: JSON.stringify(claim)
       });
       if (claimResponse.status === 412) {
-        const locked = await fetch(claimPath).then(res => res.json());
+        const lockedResponse = await fetchFresh(claimPath);
+        const locked = lockedResponse.ok ? await lockedResponse.json() : null;
         if (!locked?.content) throw new Error('Chưa thể khóa món quà trên Firebase.');
         saveClaim(locked);
       } else {
-        if (!claimResponse.ok) throw new Error('Chưa thể lưu món quà lên Firebase.');
+        if (!claimResponse.ok) {
+          throw new Error(`Chưa thể lưu món quà lên Firebase (${claimResponse.status}).`);
+        }
         saveClaim(claim);
 
         const claimUpdates = {
@@ -1448,30 +1449,30 @@ async function openGift() {
         }).catch(() => {});
       }
     }
-  }
 
-  if (giftObj) giftObj.classList.remove('opening');
-  $$('[data-action="gift"]').forEach(b => b.disabled = false);
-  opening = false;
+    render();
+    showWish(state.claim, true);
 
-  render();
-  showWish(state.claim, true);
-
-  // Sparkles
-  const dialog = $('#wish-dialog');
-  if (dialog) {
-    for (let i = 0; i < 24; i++) {
-      const s = document.createElement('span');
-      s.className = 'spark';
-      s.textContent = '✦';
-      s.style.setProperty('--dx', Math.cos(i) * 190 + 'px');
-      s.style.setProperty('--dy', Math.sin(i) * 240 + 'px');
-      dialog.append(s);
-      setTimeout(() => s.remove(), 1600);
+    // Sparkles
+    const dialog = $('#wish-dialog');
+    if (dialog) {
+      for (let i = 0; i < 24; i++) {
+        const s = document.createElement('span');
+        s.className = 'spark';
+        s.textContent = '✦';
+        s.style.setProperty('--dx', Math.cos(i) * 190 + 'px');
+        s.style.setProperty('--dy', Math.sin(i) * 240 + 'px');
+        dialog.append(s);
+        setTimeout(() => s.remove(), 1600);
+      }
     }
-  }
 
-  return { content: state.claim.content };
+    return { content: state.claim.content };
+  } finally {
+    if (giftObj) giftObj.classList.remove('opening');
+    $$('[data-action="gift"]').forEach(b => b.disabled = false);
+    opening = false;
+  }
 }
 
 async function sendWish(content, name, anonymous, isPublic, lanternType) {
